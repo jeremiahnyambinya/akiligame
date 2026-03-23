@@ -1,0 +1,2593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AkiliGame — Financial Literacy Simulation</title>
+<style>
+:root{
+  --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a26;--card:#14141e;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.16);
+  --blue:#2979ff;--blue2:#448aff;--blue-bg:rgba(41,121,255,0.10);
+  --green:#00c853;--green-bg:rgba(0,200,83,0.10);
+  --red:#ff5252;--red-bg:rgba(255,82,82,0.10);
+  --amber:#ffab40;--amber-bg:rgba(255,171,64,0.10);
+  --purple:#7c4dff;--purple-bg:rgba(124,77,255,0.10);
+  --text:#f0f0f8;--text2:#8888aa;--text3:#44445a;
+  --mono:'Courier New',monospace;--r:10px;--r2:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;min-height:100vh;}
+.wrap{max-width:860px;margin:0 auto;padding:20px 14px 60px;}
+/* ── Header ── */
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.logo{font-family:var(--mono);font-size:20px;font-weight:bold;color:var(--blue2);}
+.logo-badge{font-size:10px;font-weight:700;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.06em;margin-left:8px;}
+.token-meter{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.token-val{font-family:var(--mono);font-size:22px;font-weight:bold;color:var(--amber);}
+.token-label{font-size:11px;color:var(--text2);}
+/* ── Screens ── */
+.screen{display:none;animation:fadeIn .25s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* ── Profile grid ── */
+.section-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;}
+.profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:border-color .15s,transform .1s;position:relative;}
+.profile-card:hover{border-color:var(--blue);transform:translateY(-1px);}
+.profile-card.sel{border:2px solid var(--blue);background:var(--blue-bg);}
+.pc-avatar{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);border:1px solid var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--blue2);margin-bottom:8px;}
+.pc-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.pc-role{font-size:11px;color:var(--text2);margin-bottom:6px;}
+.pc-city{font-size:11px;color:var(--text3);}
+.sev{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;position:absolute;top:10px;right:10px;}
+.sev1{background:var(--green-bg);color:var(--green);}
+.sev2{background:var(--amber-bg);color:var(--amber);}
+.sev3{background:var(--amber-bg);color:var(--amber);}
+.sev4{background:var(--red-bg);color:var(--red);}
+/* ── Decision screen ── */
+.profile-pill{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;}
+.pill-avatar{width:32px;height:32px;border-radius:50%;background:var(--blue-bg);border:1px solid var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue2);flex-shrink:0;}
+.pill-name{font-size:13px;font-weight:600;}
+.pill-sub{font-size:11px;color:var(--text2);}
+.cash-meter{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;}
+.cm-label{font-size:11px;color:var(--text2);margin-bottom:4px;}
+.cm-val{font-family:var(--mono);font-size:28px;font-weight:bold;transition:color .2s;}
+.cm-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.cm-ok{color:var(--green);}
+.cm-warn{color:var(--amber);}
+.cm-bad{color:var(--red);}
+.rules-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.7;}
+.rules-box strong{color:var(--text);}
+.loan-list{margin-bottom:16px;}
+.loan-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s;}
+.loan-card:hover:not(.locked){border-color:var(--border2);}
+.loan-card.selected{border-color:var(--blue);background:var(--blue-bg);}
+.loan-card.locked{cursor:default;border-color:var(--amber);background:var(--amber-bg);}
+.loan-card.locked .toggle-btn{background:var(--amber);border-color:var(--amber);}
+.lc-type{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0;text-transform:uppercase;}
+.lc-adv{background:var(--amber-bg);color:var(--amber);}
+.lc-rev{background:var(--blue-bg);color:var(--blue2);}
+.lc-amort{background:var(--purple-bg);color:var(--purple);}
+.lc-info{flex:1;min-width:0;}
+.lc-name{font-size:13px;font-weight:500;margin-bottom:2px;}
+.lc-detail{font-size:11px;color:var(--text2);}
+.lc-lock{font-size:10px;color:var(--amber);margin-left:auto;flex-shrink:0;}
+.toggle-btn{width:22px;height:22px;border-radius:4px;border:2px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:bold;color:var(--blue2);transition:all .15s;}
+.loan-card.selected .toggle-btn{background:var(--blue);border-color:var(--blue);color:#fff;}
+.loan-card.locked .toggle-btn{background:var(--amber);border-color:var(--amber);color:#fff;}
+/* ── Buttons ── */
+.btn{padding:10px 22px;border-radius:var(--r2);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;border:none;}
+.btn-pri{background:var(--blue);color:#fff;}
+.btn-pri:hover{background:var(--blue2);}
+.btn-sec{background:transparent;color:var(--text);border:1px solid var(--border2);}
+.btn-sec:hover{background:var(--bg3);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+.btn-full{width:100%;display:block;text-align:center;padding:13px;}
+/* ── Consequence screen ── */
+.result-header{display:flex;align-items:center;gap:16px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.rh-tokens{font-family:var(--mono);font-size:36px;font-weight:bold;color:var(--amber);}
+.rh-label{font-size:12px;color:var(--text2);margin-top:2px;}
+.rh-breakdown{flex:1;}
+.rh-line{font-size:12px;line-height:1.9;}
+.tok-plus{color:var(--green);}
+.tok-minus{color:var(--red);}
+.tok-bonus{color:var(--amber);}
+.consequence-list{margin-bottom:16px;}
+.cq-card{border-radius:var(--r2);padding:12px 14px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;}
+.cq-ok{background:var(--green-bg);border:1px solid rgba(0,200,83,.2);}
+.cq-fail{background:var(--red-bg);border:1px solid rgba(255,82,82,.2);}
+.cq-warn{background:var(--amber-bg);border:1px solid rgba(255,171,64,.2);}
+.cq-sms{background:var(--bg3);border:1px solid var(--border2);}
+.cq-ext{background:var(--blue-bg);border:1px solid rgba(41,121,255,.2);}
+.cq-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.cq-body{flex:1;}
+.cq-name{font-size:12px;font-weight:600;margin-bottom:3px;}
+.cq-ok .cq-name{color:var(--green);}
+.cq-fail .cq-name{color:var(--red);}
+.cq-warn .cq-name{color:var(--amber);}
+.cq-sms .cq-name{color:var(--text2);}
+.cq-ext .cq-name{color:var(--blue2);}
+.cq-msg{font-size:12px;color:var(--text2);line-height:1.65;}
+.coach-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;}
+.coach-title{font-size:11px;font-weight:600;color:var(--blue2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.coach-body{font-size:12px;color:var(--text2);line-height:1.8;}
+.coach-body strong{color:var(--text);}
+.perf-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:14px;}
+.perf-excellent{background:var(--green-bg);color:var(--green);border:1px solid rgba(0,200,83,.3);}
+.perf-good{background:var(--blue-bg);color:var(--blue2);border:1px solid rgba(41,121,255,.3);}
+.perf-learn{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,171,64,.3);}
+.perf-critical{background:var(--red-bg);color:var(--red);border:1px solid rgba(255,82,82,.3);}
+/* ── Progress ── */
+.act-bar{display:flex;gap:4px;margin-bottom:20px;}
+.act-pip{flex:1;height:3px;border-radius:2px;background:var(--bg3);}
+.act-pip.done{background:var(--blue);}
+.act-pip.active{background:var(--amber);}
+/* ── Misc ── */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.stat-box{background:var(--bg3);border-radius:var(--r2);padding:10px 12px;}
+.stat-label{font-size:10px;color:var(--text2);margin-bottom:3px;}
+.stat-val{font-family:var(--mono);font-size:17px;font-weight:bold;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+.tag-hint{font-size:10px;color:var(--text3);margin-bottom:12px;}
+@media(max-width:560px){.profile-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:380px){.profile-grid{grid-template-columns:1fr;}}
+@media(max-width:480px){.loan-type-ref{grid-template-columns:1fr;}}
+/* ── Act 3 ── */
+.a3-product{background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:border-color .15s;}
+.a3-product.sel{border-color:var(--green);background:rgba(0,200,83,.07);}
+.a3-product:hover{border-color:var(--blue);}
+.a3-prod-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.a3-prod-rate{font-size:18px;font-weight:800;color:var(--green);font-family:var(--mono);}
+.a3-prod-meta{font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5;}
+.a3-prod-risk{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-top:4px;}
+.a3-risk-low{background:rgba(0,200,83,.15);color:var(--green);}
+.a3-risk-med{background:rgba(255,171,64,.15);color:var(--amber);}
+.a3-risk-hi {background:rgba(255,77,77,.15);color:var(--red);}
+.a3-alloc-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px;}
+.a3-alloc-name{flex:1;font-size:12px;font-weight:600;color:var(--text);}
+.a3-alloc-ctrl{display:flex;align-items:center;gap:6px;}
+.a3-alloc-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.a3-alloc-btn:hover{border-color:var(--blue);color:var(--blue);}
+.a3-alloc-val{font-family:var(--mono);font-size:14px;font-weight:700;min-width:40px;text-align:center;color:var(--blue2);}
+.a3-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;text-align:center;}
+.a3-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.a3-stat-val{font-size:16px;font-weight:800;font-family:var(--mono);color:var(--green);}
+.a3-breakdown-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.a3-amort-row{display:flex;justify-content:space-between;padding:7px 12px;background:var(--bg3);border-radius:var(--r2);margin-bottom:6px;font-size:12px;}
+
+/* ── Act 2 ── */
+.month-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);}
+.month-num{font-family:var(--mono);font-size:22px;font-weight:bold;color:var(--blue2);}
+.month-sub{font-size:11px;color:var(--text2);}
+.carry-meter{background:linear-gradient(135deg,rgba(41,121,255,.08),rgba(124,77,255,.08));border:1px solid rgba(41,121,255,.25);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;}
+.carry-label{font-size:11px;color:var(--text2);margin-bottom:3px;}
+.carry-val{font-family:var(--mono);font-size:26px;font-weight:bold;color:var(--blue2);}
+.carry-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.exit-panel{background:var(--green-bg);border:1px solid rgba(0,200,83,.25);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;}
+.exit-title{font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+.exit-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s;}
+.exit-card:hover{border-color:var(--green);}
+.exit-card.sel{border-color:var(--green);background:var(--green-bg);}
+.exit-card .toggle-btn{flex-shrink:0;}
+.exit-card.sel .toggle-btn{background:var(--green);border-color:var(--green);color:#fff;}
+.escape-bar{background:var(--bg3);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;}
+.ebar-label{font-size:11px;color:var(--text2);margin-bottom:8px;}
+.ebar-track{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+.ebar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .4s;}
+.ebar-sub{font-size:11px;color:var(--text2);}
+.loan-exited{opacity:.45;text-decoration:line-through;}
+.tier-act3{background:var(--green-bg);color:var(--green);border:1px solid rgba(0,200,83,.3);}
+.tier-extended{background:var(--blue-bg);color:var(--blue2);border:1px solid rgba(41,121,255,.3);}
+.tier-trapped{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,171,64,.3);}
+.topup-box{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px;margin:14px 0;}
+.topup-title{font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hdr">
+  <div>
+    <span class="logo">AkiliGame</span>
+    <span class="logo-badge">Beta Demo</span>
+  </div>
+  <div class="token-meter">
+    <div>
+      <div class="token-val" id="tokenTotal">0</div>
+      <div class="token-label">tokens</div>
+    </div>
+  </div>
+</div>
+
+<div class="act-bar" id="actBar">
+  <div class="act-pip active" id="pip-m1"></div>
+  <div class="act-pip" id="pip-m2"></div>
+  <div class="act-pip" id="pip-m3"></div>
+  <div class="act-pip" id="pip-m4"></div>
+  <div class="act-pip" id="pip-m5"></div>
+  <div class="act-pip" id="pip-m6"></div>
+  <div class="act-pip" id="pip-act3"></div>
+</div>
+
+<!-- SCREEN 1: Profile Select -->
+<div class="screen active" id="s-profiles">
+  <div class="section-title">Act 1 · Month 1 — Pick your player</div>
+  <div style="background:linear-gradient(135deg,rgba(41,121,255,0.08),rgba(124,77,255,0.08));border:1px solid rgba(41,121,255,0.2);border-radius:var(--r);padding:16px 18px;margin-bottom:14px;">
+    <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">Think you know how to juggle loans? Prove it.</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+      Nine Kenyans. Nine debt situations. One question: <strong style="color:var(--blue2)">can you make the money stretch?</strong>
+      <br>
+      Each profile is a scenario drawn from the reality many borrowers navigate every month —
+      multiple loans, limited cash, and a sequence that either works or doesn't.
+      The catch? The order you pay matters more than the amount.
+      Get it right and carry-forward builds. Get it wrong and the penalties arrive before you do.
+      <br><br>
+      <span style="color:var(--text3);font-size:11px;">
+        Available cash shown is <em>post-living-costs</em> — rent, food, school fees already out.
+        This is the allocation decision, not the income question.
+        An AI coach breaks down every move after each round — no judgment, just the logic.
+      </span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;" class="loan-type-ref">
+    <div style="background:var(--bg3);border:1px solid var(--blue);border-radius:var(--r2);padding:10px 12px;">
+      <div style="font-size:10px;font-weight:700;color:var(--blue2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🔄 Revolving</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">30-day digital loans. Pay → re-borrow immediately. Miss a payment and penalties hit automatically at T+1. You exit by <em>not</em> re-borrowing — which requires surplus cash.</div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--amber);border-radius:var(--r2);padding:10px 12px;">
+      <div style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">⚡ Advance</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">One-off cash advance. Paid once — gone permanently. No guarantee of a repeat advance; every new application goes through fresh review.</div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--purple);border-radius:var(--r2);padding:10px 12px;">
+      <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📅 Amortised</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">Fixed monthly instalments over 3–36 months. Each payment reduces the balance. Remaining months shown on every loan card — some close within this game.</div>
+    </div>
+  </div>
+  <div class="profile-grid" id="profileGrid"></div>
+  <button class="btn btn-pri btn-full" id="startBtn" onclick="goToDecision()" style="display:none">Let's go →</button>
+</div>
+
+<!-- SCREEN 2: Decision -->
+<div class="screen" id="s-decision">
+  <div class="profile-pill" id="decisionPill"></div>
+  <div id="act2ExitBanner" style="display:none;margin-bottom:12px;"></div>
+  <div class="cash-meter">
+    <div class="cm-label">Available cash this month</div>
+    <div class="cm-val cm-ok" id="cashDisplay">KSh 0</div>
+    <div class="cm-sub" id="cashSub">Tick the loans you want to pay below.</div>
+  </div>
+  <div class="rules-box">
+    <strong>Your challenge:</strong> Tick the loans you believe will cover the most obligations with this cash. The sequence matters — each revolving loan costs more than it returns (pay &gt; re-borrow), so the order you select them in changes what cash is left for the next one. <em>No loans are pre-selected. The choice — and the learning — is yours.</em>
+  </div>
+  <div class="section-title">Loans this month — tick to include in payment sequence</div>
+  <div class="loan-list" id="loanList"></div>
+  <button class="btn btn-pri btn-full" id="confirmBtn" onclick="confirmRoute()">Confirm payments →</button>
+  <div style="margin-top:10px;">
+    <button class="btn btn-sec" onclick="showProfiles()" style="font-size:12px;padding:7px 14px;">← Change player</button>
+  </div>
+</div>
+
+<!-- SCREEN 3: Consequence -->
+<div class="screen" id="s-consequence">
+  <div class="perf-badge" id="perfBadge"></div>
+  <div class="result-header">
+    <div>
+      <div class="rh-tokens" id="roundTokens">+0</div>
+      <div class="rh-label">tokens this round</div>
+    </div>
+    <div class="rh-breakdown" id="tokenBreakdown"></div>
+  </div>
+  <div class="section-title">What happened this month</div>
+  <div class="consequence-list" id="consequenceList"></div>
+  <div id="escapeBarContainer"></div>
+  <div class="stat-row" id="summaryStats"></div>
+  <div class="coach-panel">
+    <div class="coach-title">AI Coach — What this means</div>
+    <div class="coach-body" id="coachText"></div>
+  </div>
+  <div id="act2ExitSection" style="display:none;margin-bottom:14px;"></div>
+  <div class="btn-row" id="consequenceBtns">
+    <button class="btn btn-pri" onclick="showProfiles()" style="flex:1">Try another profile →</button>
+    <button class="btn btn-sec" onclick="replayProfile()">Replay this profile</button>
+  </div>
+</div>
+
+<!-- SCREEN 4: Escape Result -->
+<div class="screen" id="s-escape-result">
+  <div id="escape-badge" class="perf-badge"></div>
+  <div id="escape-header" class="result-header"></div>
+  <div id="escape-body"></div>
+  <div class="btn-row" id="escape-btns"></div>
+</div>
+</div>
+
+<!-- SCREEN 5: Act 3 — Build Wealth -->
+<div class="screen" id="s-act3">
+  <div class="profile-pill" id="act3Pill"></div>
+  <div id="act3OptionBanner" style="margin-bottom:14px"></div>
+  <div id="act3Step1">
+    <div class="section-title" style="margin-bottom:10px">Step 1 — Choose 2 or 3 investment products</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Select the products you want to allocate your seed to. Rates shown are Kenya market averages (CY2024–2025).</div>
+    <div id="act3ProductGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+    <div id="act3Step1Error" style="font-size:11px;color:var(--red);display:none;margin-bottom:8px"></div>
+    <button class="btn btn-pri btn-full" onclick="act3GoToStep2()">Set my allocations →</button>
+  </div>
+  <div id="act3Step2" style="display:none">
+    <div class="section-title" style="margin-bottom:10px">Step 2 — Allocate your seed across chosen products</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Distribute 100% across your chosen products. Total must equal 100%.</div>
+    <div id="act3AllocPanel" style="margin-bottom:14px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border-radius:var(--r2);margin-bottom:14px">
+      <span style="font-size:12px;color:var(--text2)">Total allocated:</span>
+      <span id="act3AllocTotal" style="font-family:var(--mono);font-weight:700;font-size:14px;color:var(--green)">0%</span>
+    </div>
+    <div id="act3Step2Error" style="font-size:11px;color:var(--red);display:none;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sec" onclick="act3BackToStep1()" style="flex:0 0 auto">← Back</button>
+      <button class="btn btn-pri" onclick="act3RunProjection()" style="flex:1">Project my growth →</button>
+    </div>
+  </div>
+  <div id="act3Step3" style="display:none">
+    <div class="section-title" style="margin-bottom:10px">Your 60-month wealth projection</div>
+    <div id="act3Summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px">
+      <canvas id="act3Chart" height="220"></canvas>
+    </div>
+    <div id="act3AmortTracker" style="display:none;margin-bottom:14px"></div>
+    <div id="act3Breakdown" style="margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sec" onclick="act3BackToStep2()" style="flex:0 0 auto">← Reallocate</button>
+      <button class="btn btn-sec btn-full" onclick="showProfiles()" style="flex:1">Try another profile</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Profiles ────────────────────────────────────────────────────────────────
+const SEV_LABEL = ["","Stable","Moderate","High risk","Critical"];
+const SEV_CLASS = ["","sev1","sev2","sev3","sev4"];
+
+const PROFILES = {
+  // Revolving loans: p = monthly payable (principal + interest/fees), r = re-borrowed (principal only)
+  // drain = p - r = net monthly cash cost of holding that revolving line
+  // Rates: M-Shwari ~7.5%, KCB App/M-Pesa ~8%, Fuliza ~15%, Tala ~15%, Branch ~18%, Zenka ~15%, OKash ~20%
+  // Correct payment order: highest re-borrow (r) first — restores maximum cash at each step,
+  // preventing a high-drain loan from exhausting cash before a following higher-reborrow loan.
+  entrepreneur:{name:"Felix",role:"Entrepreneur",city:"Nairobi",age:38,income:85000,cash:50000,sev:2,
+    loans:[{id:1,n:"KCB business loan",p:18000,r:0,t:"amort",months:14,totalMonths:24},{id:2,n:"Equity Bank loan",p:12000,r:0,t:"amort",months:9,totalMonths:18},{id:3,n:"SACCO loan",p:9000,r:0,t:"amort",months:4,totalMonths:12},
+           {id:4,n:"M-Shwari",p:7500,r:7000,t:"rev"},{id:5,n:"Fuliza",p:5800,r:5000,t:"rev"},{id:6,n:"Branch loan",p:13000,r:11000,t:"rev"}],
+    esc:{mod:9},escTier:'fast',escMonth:3,topupP:0,seed:50000,lesson:'Can business debt be sequenced like a strategy? Find out.'},
+  senior:{name:"Victoria",role:"Senior professional",city:"Nairobi",age:48,income:120000,cash:66000,sev:1,
+    loans:[{id:1,n:"Mortgage",p:32000,r:0,t:"amort",months:156,totalMonths:240},{id:2,n:"Car loan",p:14000,r:0,t:"amort",months:22,totalMonths:48},{id:3,n:"Personal loan",p:11000,r:0,t:"amort",months:6,totalMonths:18},
+           {id:4,n:"KCB App",p:9700,r:9000,t:"rev"},{id:5,n:"M-Shwari",p:6500,r:6000,t:"rev"}],
+    esc:{mod:6},escTier:'fast',escMonth:2,topupP:0,seed:66000,lesson:'What if the same forces that trapped you started working for you?'},
+  selfemployed:{name:"Brian",role:"Self-employed worker",city:"Nairobi",age:26,income:28000,cash:5500,sev:4,
+    loans:[{id:1,n:"M-Shwari",p:3200,r:3000,t:"rev"},{id:2,n:"Fuliza",p:5200,r:4500,t:"rev"},{id:3,n:"Branch loan",p:10600,r:9000,t:"rev"},
+           {id:4,n:"Tala",p:6900,r:6000,t:"rev"},{id:5,n:"Zenka",p:5800,r:5000,t:"rev"},{id:6,n:"OKash",p:4800,r:4000,t:"rev"},
+           {id:7,n:"KWFT loan",p:5500,r:0,t:"amort",months:5,totalMonths:12},{id:8,n:"Chama advance",p:8000,r:0,t:"adv"}],
+    esc:{mod:22},escTier:'trapped',escMonth:null,topupP:31500,seed:5500,lesson:'When the maths doesn\'t add up — and what changes it.'},
+  trader:{name:"Grace",role:"Market trader",city:"Nakuru",age:28,income:38000,cash:18500,sev:2,
+    loans:[{id:1,n:"M-Shwari",p:5400,r:5000,t:"rev"},{id:2,n:"Fuliza",p:4000,r:3500,t:"rev"},
+           {id:3,n:"Tala",p:8100,r:7000,t:"rev"},{id:4,n:"Zenka",p:10400,r:9000,t:"rev"},
+           {id:5,n:"SACCO loan",p:6000,r:0,t:"amort",months:9,totalMonths:18},{id:6,n:"KCB App loan",p:6500,r:0,t:"amort",months:5,totalMonths:9}],
+    esc:{mod:9},escTier:'extended',escMonth:8,topupP:0,seed:18500,lesson:'Slow escape. Still escape. Patience has a compound return too.'},
+  salon:{name:"Amina",role:"Salon owner",city:"Mombasa",age:32,income:55000,cash:22000,sev:2,
+    loans:[{id:1,n:"KCB M-Pesa",p:8600,r:8000,t:"rev"},{id:2,n:"M-Shwari",p:5400,r:5000,t:"rev"},
+           {id:3,n:"Branch loan",p:11800,r:10000,t:"rev"},{id:4,n:"SACCO loan",p:7500,r:0,t:"amort",months:8,totalMonths:18},
+           {id:5,n:"Tala",p:6900,r:6000,t:"rev"}],
+    esc:{mod:11},escTier:'fast',escMonth:3,topupP:0,seed:22000,lesson:'Four revolving loans. Four months. How fast can you move?'},
+  ridehail:{name:"Max",role:"Ride-hail driver",city:"Nairobi",age:30,income:52000,cash:19000,sev:3,
+    loans:[{id:1,n:"M-Shwari",p:5400,r:5000,t:"rev"},{id:2,n:"Fuliza",p:6900,r:6000,t:"rev"},
+           {id:3,n:"Tala",p:9200,r:8000,t:"rev"},{id:4,n:"Branch loan",p:11800,r:10000,t:"rev"},
+           {id:5,n:"Device loan",p:7500,r:0,t:"amort",months:10,totalMonths:18},{id:6,n:"SACCO loan",p:5500,r:0,t:"amort",months:5,totalMonths:12},{id:7,n:"Car advance",p:9000,r:0,t:"adv"}],
+    esc:{mod:12},escTier:'trapped',escMonth:null,topupP:29000,seed:19000,lesson:'An advance, an asset loan, and four revolving lines. What gives first?'},
+  boda:{name:"Tom",role:"Boda operator",city:"Nairobi",age:34,income:45000,cash:12000,sev:3,
+    loans:[{id:1,n:"M-Shwari",p:5400,r:5000,t:"rev"},{id:2,n:"Fuliza",p:4600,r:4000,t:"rev"},
+           {id:3,n:"Branch loan",p:10600,r:9000,t:"rev"},{id:4,n:"Tala",p:9200,r:8000,t:"rev"},
+           {id:5,n:"KWFT loan",p:4500,r:0,t:"amort",months:6,totalMonths:12},{id:6,n:"Chama advance",p:8000,r:0,t:"adv"},{id:7,n:"Group loan",p:5000,r:0,t:"adv"}],
+    esc:{mod:14},escTier:'trapped',escMonth:null,topupP:26000,seed:12000,lesson:'Group lending, chama advances, revolving debt — all at once.'},
+  teacher:{name:"Jessica",role:"Teacher",city:"Kisumu",age:41,income:62000,cash:31000,sev:1,
+    loans:[{id:1,n:"M-Shwari",p:5400,r:5000,t:"rev"},{id:2,n:"KCB App",p:8600,r:8000,t:"rev"},
+           {id:3,n:"Payroll loan",p:14000,r:0,t:"amort",months:5,totalMonths:18},{id:4,n:"SACCO loan",p:9000,r:0,t:"amort",months:8,totalMonths:24}],
+    esc:{mod:7},escTier:'fast',escMonth:2,topupP:0,seed:31000,lesson:'Payroll deductions are a superpower. Are you using them right?'},
+  matatu:{name:"Tim",role:"Matatu driver",city:"Thika",age:45,income:48000,cash:15000,sev:3,
+    loans:[{id:1,n:"M-Shwari",p:4300,r:4000,t:"rev"},{id:2,n:"Fuliza",p:5800,r:5000,t:"rev"},
+           {id:3,n:"Branch loan",p:13000,r:11000,t:"rev"},{id:4,n:"Tala",p:9200,r:8000,t:"rev"},
+           {id:5,n:"Asset loan",p:9500,r:0,t:"amort",months:22,totalMonths:36},{id:6,n:"SACCO loan",p:6000,r:0,t:"amort",months:10,totalMonths:18},{id:7,n:"Chama advance",p:7000,r:0,t:"adv"}],
+    esc:{mod:16},escTier:'trapped',escMonth:null,topupP:28000,seed:15000,lesson:'Asset financing + revolving debt: which one is the trap?'}
+};
+
+// ── Lender type helpers ──────────────────────────────────────────────────────
+const EXT_FEE = ["Tala","Branch loan","Branch","Zenka"];
+const AUTO_PEN= ["M-Shwari","Fuliza","OKash","KCB App","KCB App loan","KCB M-Pesa"];
+const isExtFee = n => EXT_FEE.some(d=>n.includes(d)||d.includes(n));
+const isAutoPen= n => !isExtFee(n) && AUTO_PEN.some(d=>n.includes(d)||d.includes(n));
+
+// ── Game state ───────────────────────────────────────────────────────────────
+let G = {
+  profileKey:null, totalTokens:0, selections:new Set(),
+  // Act 2 state
+  act:1, currentMonth:1, cumulativeCarry:0,
+  exitedLoanIds:new Set(), exitSelections:new Set(),
+  monthHistory:[],
+  // Amortised instalment tracking — loanId → payments made this game
+  monthsPaid: new Map(),
+  // Balance carry-forward — loanId → accumulated unpaid KSh (advances + amortised)
+  unpaidBalances: new Map(),
+  // Escalation tracking — loanId → consecutive months with outstanding unpaid balance
+  unpaidMonths: new Map(),
+  // Act 3 state
+  act3Option: null,   // 1 = accelerate paydown, 2 = invest now
+  act3Seed: 0,        // KSh starting investment
+  act3MonthlyContrib: 0, // KSh added each month after seed
+  act3AmortMo: 0,     // monthly amortised obligations (Option 2)
+  act3Chosen: new Set(), // chosen product keys
+  act3Allocs: {},      // {tbill, mmf, sacco, equity} → %
+  act3RemainingAmort: [] // amort loans still running after Option 1 allocation
+};
+
+// Helper: effective remaining months for a loan, accounting for payments made this game
+function effectiveMonths(l) {
+  if(!l.months) return null;
+  return Math.max(0, l.months - (G.monthsPaid.get(l.id) || 0));
+}
+
+// Helper: effective amount due this month, accounting for unpaid balances carried forward
+// Advance:   unpaid balance replaces original p (remainder owed, not full amount again)
+// Amortised: unpaid balance ADDS to instalment (current instalment + all prior arrears)
+// Revolving: unpaid balance tracks accumulated penalties (5% per missed cycle on base p)
+//            effectiveP = original p + total accumulated penalties
+function effectiveP(l) {
+  const unpaid = G.unpaidBalances.get(l.id) || 0;
+  if(l.t === 'adv')   return unpaid > 0 ? unpaid : l.p;
+  if(l.t === 'amort') return l.p + unpaid;
+  if(l.r > 0)         return l.p + unpaid; // revolving: normal cycle + accumulated penalty fees
+  return l.p;
+}
+
+// Helper: how many consecutive months has this loan had an outstanding balance?
+function escalationLevel(l) {
+  return G.unpaidMonths.get(l.id) || 0;
+}
+
+const fmt = n => "KSh " + Math.round(n).toLocaleString();
+
+// ── Simulate with player selections — 4-pass algorithm ───────────────────────
+// Revolving loans where p=r are net-neutral to cash (pay and re-borrow).
+// Correct order: largest revolving first (before advance reduces cash) →
+//               advances (sunk cost) → remaining revolving → amortised.
+function gameSimulate(p, selected) {
+  let avail = p.cash;
+  const res = new Map();
+
+  // PASS 1: Revolving, sorted by RE-BORROW amount descending.
+  // Key insight from real Kenyan credit behaviour: a loan with higher payable but LOWER
+  // re-borrow (higher drain rate) can exhaust cash and block a lower-payable but higher-reborrow
+  // loan that follows. Sorting by r DESC maximises cash restored at each step, ensuring
+  // the most loans are covered. Sorting by p DESC (naive largest-first) can fail this test.
+  p.loans.filter(l => l.r > 0 && selected.has(l.id))
+         .sort((a, b) => b.r - a.r)
+         .forEach(l => {
+           const due = effectiveP(l); // l.p + any accumulated penalty fees
+           if(avail >= due){ avail -= due; avail += l.r; res.set(l.id,{...l,ok:true,gap:0,pass:1,due}); }
+           // Not yet marked failed — gets a second chance in pass 3 after advance
+         });
+
+  // PASS 2: Advances — use effectiveP (may be reduced if partially paid last month)
+  p.loans.filter(l => l.t === "adv" && selected.has(l.id))
+         .forEach(l => {
+           const due = effectiveP(l);
+           if(avail >= due){ avail -= due; res.set(l.id,{...l,ok:true,gap:0,pass:2,due}); }
+           else{ const g=due-avail; avail=0; res.set(l.id,{...l,ok:false,gap:g,pass:2,due}); }
+         });
+
+  // PASS 3: Remaining revolving — second chance after advance, r DESC same principle.
+  p.loans.filter(l => l.r > 0 && selected.has(l.id) && !res.has(l.id))
+         .sort((a, b) => b.r - a.r)
+         .forEach(l => {
+           const due = effectiveP(l);
+           if(avail >= due){ avail -= due; avail += l.r; res.set(l.id,{...l,ok:true,gap:0,pass:3,due}); }
+           else{ const g=due-avail; avail=0; res.set(l.id,{...l,ok:false,gap:g,pass:3,due}); }
+         });
+
+  // PASS 4: Amortised — paid last from remaining pool.
+  // Sub-pass 4a: pay in full, smallest first (maximise number fully cleared).
+  const amortLoans = p.loans.filter(l => l.r===0 && l.t==="amort" && selected.has(l.id))
+                            .sort((a,b) => a.p - b.p);
+  amortLoans.forEach(l => {
+    const due = effectiveP(l);
+    if(avail >= due){ avail -= due; res.set(l.id,{...l,ok:true,gap:0,partial:false,pass:4,due}); }
+  });
+  // Sub-pass 4b: remaining amortised loans — if any cash left distribute proportionately
+  // as partial payments; if no cash at all mark as failed with zero partial.
+  const unpaidAmort = amortLoans.filter(l => !res.has(l.id));
+  if(unpaidAmort.length > 0){
+    if(avail > 0){
+      const totalUnpaid = unpaidAmort.reduce((s,l) => s+effectiveP(l), 0);
+      unpaidAmort.forEach(l => {
+        const due = effectiveP(l);
+        const partialAmt = Math.round((due / totalUnpaid) * avail);
+        res.set(l.id,{...l,ok:false,partial:true,partialAmt,gap:due-partialAmt,pass:4,due});
+      });
+      avail = 0;
+    } else {
+      unpaidAmort.forEach(l => {
+        const due = effectiveP(l);
+        res.set(l.id,{...l,ok:false,partial:false,partialAmt:0,gap:due,pass:4,due});
+      });
+    }
+  }
+
+  // Unselected → skipped
+  p.loans.forEach(l => { if(!res.has(l.id)) res.set(l.id,{...l,ok:false,gap:effectiveP(l),skipped:true}); });
+
+  const loans = p.loans.map(l => res.get(l.id));
+  return { loans, carry: avail,
+    fails:    loans.filter(l => !l.ok && !l.skipped && !l.partial),
+    partials: loans.filter(l => l.partial),
+    skipped:  loans.filter(l => l.skipped),
+    totalP:   p.loans.reduce((s,l)=>s+l.p,0),
+    totalR:   p.loans.reduce((s,l)=>s+l.r,0),
+    nonRev:   p.loans.filter(l=>l.r===0).reduce((s,l)=>s+l.p,0)
+  };
+}
+
+// ── Virtual cash (for live display during selection) ─────────────────────────
+// ── Virtual cash display — delegates to gameSimulate for guaranteed consistency ──
+// Single source of truth: display and confirm use exactly the same code path.
+function virtualCash(p, selected) {
+  return gameSimulate(p, selected).carry;
+}
+
+// ── Score round ──────────────────────────────────────────────────────────────
+function scoreRound(p, result) {
+  let tokens = 0;
+  const lines = [];
+  const adv = p.loans.filter(l=>l.t==="adv");
+  const advPaid = result.loans.filter(l=>l.t==="adv"&&l.ok);
+
+  // Per loan covered (full) + partial attempts
+  let coveredCount = result.loans.filter(l=>l.ok).length;
+  const partialCount = result.partials.length;
+  if(coveredCount>0){ tokens+=coveredCount; lines.push({c:"tok-plus",t:`+${coveredCount} — ${coveredCount} obligation${coveredCount>1?"s":""} covered`}); }
+  if(partialCount>0){ tokens+=partialCount; lines.push({c:"tok-plus",t:`+${partialCount} — partial payment${partialCount>1?"s":""} made (cash fully deployed)`}); }
+
+  // All obligations covered bonus
+  if(result.fails.length===0 && result.skipped.length===0 && result.partials.length===0){
+    tokens+=5; lines.push({c:"tok-bonus",t:"+5 bonus — all obligations covered ★"});
+  } else if(result.fails.length===0 && result.skipped.length===0 && result.partials.length>0){
+    tokens+=3; lines.push({c:"tok-bonus",t:"+3 bonus — all cash deployed, partials submitted ★"});
+  } else if(result.fails.length===0 && result.skipped.length>0){
+    tokens+=2; lines.push({c:"tok-bonus",t:"+2 — all selected loans covered"});
+  }
+
+  // All advances cleared bonus
+  if(adv.length>0 && advPaid.length===adv.length){
+    tokens+=3; lines.push({c:"tok-bonus",t:"+3 bonus — all advances cleared"});
+  }
+
+  // Correct priority: revolving paid in pass 1 (before advance reduced cash), then advance, then amortised
+  const revPaidPass1 = result.loans.filter(l=>l.r>0&&l.ok&&l.pass===1);
+  const advPaidPass2 = result.loans.filter(l=>l.t==="adv"&&l.ok&&l.pass===2);
+  const amortPaidPass4 = result.loans.filter(l=>l.r===0&&l.t==="amort"&&l.ok&&l.pass===4);
+  if(revPaidPass1.length>0 && (advPaidPass2.length>0 || amortPaidPass4.length>0)){
+    tokens+=2; lines.push({c:"tok-bonus",t:"+2 — correct priority: revolving before advance deduction"});
+  }
+
+  // Penalties for skipped revolving (auto-penalty)
+  const skippedAutoPen = result.skipped.filter(l=>l.r>0 && isAutoPen(l.n));
+  const skippedExtFee  = result.skipped.filter(l=>l.r>0 && isExtFee(l.n));
+  if(skippedAutoPen.length){ tokens-=skippedAutoPen.length; lines.push({c:"tok-minus",t:`-${skippedAutoPen.length} — auto-penalty on ${skippedAutoPen.map(l=>l.n).join(", ")}`}); }
+  if(skippedExtFee.length){  tokens-=skippedExtFee.length;  lines.push({c:"tok-minus",t:`-${skippedExtFee.length} — penalty on ${skippedExtFee.map(l=>l.n).join(", ")}`}); }
+
+  // Advisory outcome for skipped advances — not a pass/fail, but a consequence
+  const skippedAdv = result.skipped.filter(l=>l.t==="adv");
+  if(skippedAdv.length){ tokens-=1; lines.push({c:"tok-minus",t:`-1 — advance deferred (future access may be delayed 1–3 cycles)`}); }
+
+  return { tokens:Math.max(0,tokens), lines };
+}
+
+// ── Consequence messages ─────────────────────────────────────────────────────
+function consequenceMsg(loan, result) {
+  const pen5 = Math.round(loan.p * 0.05);
+  const extFee = Math.round(loan.p * 0.03);
+  const r = result.loans.find(l=>l.id===loan.id);
+  if(!r) return null;
+
+  if(loan.t==="adv"){
+    if(r.ok) return {cls:"cq-ok",icon:"✓",
+      name:`${loan.n} — ONE-TIME PAID ✓`,
+      msg:`This is a one-time obligation. It is now permanently cleared and <strong>will not appear in any future month</strong>. The ${fmt(loan.p)} it consumed this month is freed — from next month that cash goes directly to your amortised loans.`};
+    if(r.skipped) return {cls:"cq-warn",icon:"⚠",name:loan.n,msg:`You chose not to pay this advance this month. Contact the lender proactively before the due date. The longer this remains outstanding, the more restricted future access becomes.`};
+    const advMonths = G.unpaidMonths.get(loan.id) || 0;
+    const advEsc = advMonths >= 3
+      ? `<strong style="color:var(--red)">⚠ URGENT — ${advMonths} months outstanding. This is at risk of CRB listing. Contact the lender immediately to agree a repayment plan before a default notice is issued.</strong>`
+      : advMonths >= 2
+        ? `<strong style="color:var(--amber)">HIGH ALERT — ${advMonths} months outstanding. The lender will initiate formal recovery steps. Engage now — request a repayment plan or consolidation before this escalates.</strong>`
+        : `Contact the lender before the due date and confirm a timeline for the ${fmt(r.gap)} balance. Future advance availability depends on this.`;
+    return {cls:advMonths>=2?"cq-fail":"cq-warn",icon:advMonths>=2?"🚨":"⚠",name:loan.n,msg:`${fmt(r.gap)} short. ${advEsc}`};
+  }
+
+  if(loan.r>0){
+    if(r.ok){
+      // Product-specific consequence narrative — each lender type works differently
+      const MPESA_NATIVE = ["M-Shwari","Fuliza","KCB M-Pesa","KCB App"];
+      const isMpesaNative = MPESA_NATIVE.some(d => loan.n.includes(d) || d.includes(loan.n));
+      const creditNote = isMpesaNative
+        ? "M-Pesa borrowing limit restored."
+        : "Credit line renewed for next cycle.";
+      return {cls:"cq-ok",icon:"✓",name:loan.n,
+        msg:`Paid · Re-borrowed ${fmt(loan.r)} · Monthly drain: ${fmt(loan.p-loan.r)} · ${creditNote}`};
+    }
+    if(r.skipped){
+      const skippedRevMonths = G.unpaidMonths.get(loan.id) || 0;
+      const skippedRevPens = G.unpaidBalances.get(loan.id) || 0;
+      const accumNote = skippedRevMonths >= 2
+        ? ` <strong style="color:var(--red)">Total penalty fees now ${fmt(skippedRevPens)} across ${skippedRevMonths} missed cycles.</strong>`
+        : '';
+      if(isAutoPen(loan.n)) return {cls:"cq-sms",icon:"📱",name:`SMS from ${loan.n}`,msg:`Late payment fee KSh ${pen5.toLocaleString()} automatically applied. Next cycle obligation: ${fmt(loan.p)}. Missed cycles damage your credit score and may reduce your borrowing limit.${accumNote}`};
+      if(isExtFee(loan.n)) return {cls:"cq-ext",icon:"📱",name:`${loan.n} — extension option`,msg:`Pay extension fee KSh ${extFee.toLocaleString()} before T+1 to extend deadline 7 days. If missed, penalty of KSh ${pen5.toLocaleString()} applies. Next cycle obligation resets to ${fmt(loan.p)}.${accumNote}`};
+      return {cls:"cq-fail",icon:"⚠",name:loan.n,msg:`Not paid — penalty applies from T+1.`};
+    }
+    const revPenalties = G.unpaidBalances.get(loan.id) || 0;
+    const revMonths = G.unpaidMonths.get(loan.id) || 0;
+    // Revolving cycle resets to original p each month — show penalty fees accruing separately
+    const revAccumNote = revMonths >= 2
+      ? ` <strong style="color:var(--red)">Accumulated penalty fees: ${fmt(revPenalties)} across ${revMonths} missed cycles. Next cycle obligation remains ${fmt(loan.p)} plus any new penalty.</strong>`
+      : revMonths === 1
+        ? ` Penalty fee of ${fmt(revPenalties)} is now outstanding. Next cycle obligation resets to ${fmt(loan.p)}.`
+        : '';
+    return {cls:"cq-fail",icon:"⚠",name:loan.n,msg:`Insufficient cash — ${fmt(r.gap)} short. Penalty applied from T+1.${revAccumNote}`};
+  }
+
+  if(loan.t==="amort"){
+    if(r.ok){
+      // effectiveMonths already accounts for this payment (monthsPaid was just incremented)
+      // so it directly gives the correct remaining count — no further subtraction needed
+      const mLeft = loan.months ? effectiveMonths(loan) : null;
+      const closeNote = mLeft !== null
+        ? mLeft === 0
+          ? ` <strong style="color:var(--green)">Final instalment — this loan is now fully paid. 🎉</strong>`
+          : mLeft <= 5
+            ? ` <span style="color:var(--green)">${mLeft} instalment${mLeft>1?'s':''} remaining — closes this game.</span>`
+            : ` ${mLeft} instalments remaining.`
+        : '';
+      return {cls:"cq-ok",icon:"✓",name:loan.n,msg:`Instalment paid — balance reducing.${closeNote}`};
+    }
+    const amortMonths = G.unpaidMonths.get(loan.id) || 0;
+    const amortEscNote = amortMonths >= 3
+      ? `<strong style="color:var(--red)"> ⚠ URGENT — ${amortMonths} months of arrears. Default notice likely unless you engage the lender now. Request formal restructure or top-up consolidation immediately.</strong>`
+      : amortMonths >= 2
+        ? `<strong style="color:var(--amber)"> HIGH ALERT — ${amortMonths} months of arrears. The lender will initiate recovery. Contact them proactively today — propose a restructure or request a top-up loan to consolidate arrears into a manageable instalment.</strong>`
+        : ``;
+    if(r.partial) return {cls:amortMonths>=2?"cq-fail":"cq-warn",icon:amortMonths>=2?"🚨":"◑",name:loan.n,
+      msg:`Partial payment of ${fmt(r.partialAmt)} made (${fmt(r.gap)} outstanding — carries to next month). Contact lender BEFORE due date with this partial as proof of commitment. Request a 30-day extension and propose a clear timeline.${amortEscNote}`};
+    if(r.skipped) return {cls:amortMonths>=2?"cq-fail":"cq-warn",icon:amortMonths>=2?"🚨":"⚠",name:loan.n,
+      msg:`Not selected — contact lender BEFORE the due date to request a 30-day extension. Be prepared to show you can cover both this instalment and the next together.${amortEscNote}`};
+    return {cls:amortMonths>=2?"cq-fail":"cq-warn",icon:amortMonths>=2?"🚨":"⚠",name:loan.n,
+      msg:`Insufficient cash (${fmt(r.gap)} short — carries to next month). Contact lender before due date. Request 30 days and show projected cash covers both deferred and next instalment.${amortEscNote}`};
+  }
+  return null;
+}
+
+// ── Coach debrief ────────────────────────────────────────────────────────────
+// ── Global sequential exit simulation ───────────────────────────────────────
+// Single source of truth used by escape bar, exit banner, and coach debrief.
+// Exits are sequential — each reduces carry before evaluating the next.
+// Order: highest drain first (maximum cash freed per step).
+// activeRevLoans: the already-filtered active revolving loans array.
+function globalSequentialExits(carry, activeRevLoans) {
+  // Exit cost = effectiveP(l) = l.p + accumulated penalties (full repayment, no reborrow)
+  const ordered = [...activeRevLoans].sort((a,b)=>(b.p-b.r)-(a.p-a.r)); // drain DESC
+  const exitable = [];
+  let running = carry;
+  for(const l of ordered){
+    const cost = effectiveP(l); // l.p + any penalties — full exit price
+    if(running >= cost){ running -= cost; exitable.push(l); }
+  }
+  const remaining = ordered.filter(l=>!exitable.includes(l));
+  // Sort remaining by exit cost ASC — cheapest to exit first (most reachable target)
+  const nextTarget = remaining.length > 0 ? remaining.sort((a,b)=>effectiveP(a)-effectiveP(b))[0] : null;
+  return { exitable, remainingCarry: running, nextTarget, remaining };
+}
+
+function coachDebrief(p, result, score) {
+  const skippedRev = result.skipped.filter(l=>l.r>0);
+  const skippedAmort = result.skipped.filter(l=>l.t==="amort");
+  const skippedAdv = result.skipped.filter(l=>l.t==="adv");
+  const adv = p.loans.filter(l=>l.t==="adv");
+  const advPaid = result.loans.filter(l=>l.t==="adv"&&l.ok);
+  const revLoans = p.loans.filter(l=>l.r>0).sort((a,b)=>a.p-b.p);
+
+  // Use global sequential exit function — active revs derived from profile + exitedLoanIds
+  function sequentialExits(carry) {
+    const activeRevs = p.loans.filter(l=>l.r>0 && !G.exitedLoanIds.has(l.id));
+    return globalSequentialExits(carry, activeRevs);
+  }
+  // buildExitAdvisory — single source of truth for all exit guidance in coach.
+  // Uses sequential simulation: exits reduce carry before next is evaluated.
+  function buildExitAdvisory(carry, totalDrain) {
+    if(!revLoans.length) return '';
+    const { exitable, remainingCarry, nextTarget, remaining } = sequentialExits(carry);
+    const allActiveRev = p.loans.filter(l=>l.r>0 && !G.exitedLoanIds.has(l.id));
+
+    if(allActiveRev.length === 0) return ''; // all already exited
+
+    if(exitable.length === 0){
+      // No exits yet possible — show accumulation target
+      if(!nextTarget) return '';
+      const stillNeeded = nextTarget.r - carry;
+      const nextDrain = nextTarget.p - nextTarget.r;
+      return ` Monthly drain across all revolving loans: ${fmt(totalDrain)}.`
+           + ` Build carry-forward to ${fmt(nextTarget.r)} to permanently close out`
+           + ` ${nextTarget.n} — ${fmt(stillNeeded)} more needed.`
+           + ` That exit ends ${fmt(nextDrain)}/month in drain.`
+           + ` On the moderate scenario, ${p.name} reaches full debt freedom in ${p.esc.mod} months,`
+           + ` after which ${fmt(monthlyInvest)}/month (50% of available cash) compounds toward ${y5} by Year 5.`;
+    }
+
+    if(exitable.length === allActiveRev.length){
+      // All remaining revolving loans can be sequentially exited now
+      const totalExitCost = exitable.reduce((s,l)=>s+effectiveP(l),0);
+      const drainElim = exitable.reduce((s,l)=>s+(l.p-l.r),0);
+      return ` <strong>Exit opportunity — ${exitable.length===1?'the final revolving loan':'all '+exitable.length+' revolving loans'}.</strong>`
+           + ` Your carry-forward of ${fmt(carry)} covers them sequentially:`
+           + ` ${exitable.map(l=>`${l.n} (${fmt(effectiveP(l))})`).join(' → ')}.`
+           + ` Total exit cost: ${fmt(totalExitCost)} · ${fmt(remainingCarry)} remains.`
+           + ` Eliminates ${fmt(drainElim)}/month in drain permanently.`
+           + ` On the moderate scenario, ${p.name} reaches full debt freedom in ${p.esc.mod} months,`
+           + ` after which ${fmt(monthlyInvest)}/month (50% of available cash) compounds toward ${y5} by Year 5.`;
+    }
+
+    // Some can be exited, some cannot yet
+    const firstExit = exitable[0];
+    const firstDrain = firstExit.p - firstExit.r;
+    // Is firstExit the globally highest-drain loan, or just the highest within reach?
+    const highestDrainOverall = [...exitable, ...remaining].sort((a,b)=>(b.p-b.r)-(a.p-a.r))[0];
+    const firstIsGlobalBest = highestDrainOverall.id === firstExit.id;
+    const reachLabel = firstIsGlobalBest
+      ? `highest drain first`
+      : `highest drain within reach of your carry-forward`;
+    let msg = ` <strong>Exit available:</strong> Your carry-forward of ${fmt(carry)} covers`
+            + ` ${exitable.length === 1 ? firstExit.n : exitable.map(l=>l.n).join(' then ')}`
+            + ` (${reachLabel}).`
+            + ` Exit cost ${fmt(firstExit.r)}, ends ${fmt(firstDrain)}/month in drain permanently.`
+            + ` ${fmt(remainingCarry)} carry remains after.`;
+    if(!firstIsGlobalBest){
+      // Explain why the higher-drain loan isn't being exited yet
+      const higherDrain = highestDrainOverall.p - highestDrainOverall.r;
+      const stillNeededForBest = effectiveP(highestDrainOverall) - remainingCarry;
+      msg += ` <em>${highestDrainOverall.n} has a higher drain (${fmt(higherDrain)}/month)`
+           + ` but needs ${fmt(effectiveP(highestDrainOverall))} to exit — ${fmt(stillNeededForBest)} more to reach it.</em>`;
+    } else if(nextTarget){
+      const stillNeeded = nextTarget.r - remainingCarry;
+      const nextDrain = nextTarget.p - nextTarget.r;
+      msg += ` Next: ${fmt(stillNeeded)} more carry to exit ${nextTarget.n}`
+           + ` (${fmt(nextDrain)}/month drain).`;
+    }
+    msg += ` On the moderate scenario, ${p.name} reaches full debt freedom in ${p.esc.mod} months,`
+         + ` after which ${fmt(monthlyInvest)}/month (50% of available cash) compounds toward ${y5} by Year 5.`;
+    return msg;
+  }
+
+  const monthlyInvest = Math.round(p.cash * 0.5); // 50% of available cash → investment
+  const y5 = fmt(Math.round(monthlyInvest*1.01*((Math.pow(1.01,60)-1)/0.01)));
+
+  // Helper: carry-forward allocation advisory for skipped amortised loans
+  function carryForwardAmortAdvisory(carry) {
+    if(carry > 0 && skippedAmort.length > 0){
+      const totalSkippedAmort = skippedAmort.reduce((s,l)=>s+l.p,0);
+      const monthsInfo = loan => { const m = effectiveMonths(loan); return m ? ` (${m} month${m>1?'s':''} remaining)` : ''; };
+      if(carry >= totalSkippedAmort){
+        return ` Your carry-forward of ${fmt(carry)} covers the skipped ${skippedAmort.map(l=>l.n+monthsInfo(l)).join(" and ")} in full — allocate it immediately and contact ${skippedAmort.length>1?"each lender":"the lender"} before the due date to confirm payment.`;
+      } else {
+        const totalProp = skippedAmort.map(l=>{
+          const amt = Math.round((l.p/totalSkippedAmort)*carry);
+          return `${l.n}${monthsInfo(l)}: ${fmt(amt)}`;
+        }).join(", ");
+        return ` Carry-forward of ${fmt(carry)} — allocate proportionately to your unselected amortised loan${skippedAmort.length>1?"s":""} (${totalProp}) and contact ${skippedAmort.length>1?"each lender":"the lender"} before the due date. Present this as proof of commitment and propose a clear timeline for the balance.`;
+      }
+    }
+    return "";
+  }
+
+  let text = "";
+
+  const allCoveredNoAdv = result.fails.length===0 && result.skipped.filter(l=>l.t!=="adv").length===0 && result.partials.length===0;
+  const allDeployedNoAdv = result.fails.length===0 && result.skipped.filter(l=>l.t!=="adv").length===0 && result.partials.length>0;
+
+  if(allDeployedNoAdv){
+    const partialNames = result.partials.map(l=>l.n).join(" and ");
+    const totalPartialGap = result.partials.reduce((s,l)=>s+l.gap,0);
+    text = `<strong>Strong play — cash fully deployed.</strong> Every available shilling has been allocated. ${partialNames} received a proportionate partial payment from your remaining cash. Contact ${result.partials.length>1?"each lender":"the lender"} before the due date, present the partial amount already paid, and propose a timeline to clear the ${fmt(totalPartialGap)} outstanding balance. Institutional lenders treat a proactive partial payment as evidence of good faith — far better than silence or a missed payment. `;
+    if(revLoans.length>0){
+      const totalDrainD = revLoans.reduce((s,l)=>s+(l.p-l.r),0);
+      text += buildExitAdvisory(result.carry, totalDrainD);
+    }
+
+  } else if(allCoveredNoAdv && score.tokens>=8){
+    text = `<strong>Strong play.</strong> All selected obligations covered with ${fmt(result.carry)} carry-forward. `;
+    if(skippedAdv.length){
+      text += `You chose to defer the ${skippedAdv.map(l=>l.n).join(" and ")} — the AI coach advises paying advances first when cash allows, as future availability depends on the lender's next credit review cycle. `;
+    } else if(adv.length && advPaid.length===adv.length){
+      const advNames = adv.map(l=>l.n).join(" and ");
+      const advTotal = adv.reduce((s,l)=>s+l.p,0);
+      const amortPartialLoans = result.partials||[];
+      if(amortPartialLoans.length > 0){
+        const partialNames = amortPartialLoans.map(l=>l.n).join(" and ");
+        text += `<strong>${advNames}</strong> ${adv.length>1?"are":"is"} permanently cleared — ${fmt(advTotal)}/month freed from next month onward. `
+             + `${partialNames} received partial payments this month. `
+             + `<strong>Smart play for next month:</strong> with ${advNames} gone, that ${fmt(advTotal)} is available for amortised loans. `
+             + `Contact ${amortPartialLoans.length>1?"each lender":"the lender"} now — present this month's partial as evidence of commitment, request a 30-day extension on the balance, and demonstrate that next month's full payment is now viable with the advance freed. `;
+      } else {
+        text += `Your ${advNames} ${adv.length>1?"are":"is"} permanently cleared — cash freed for next month. `;
+      }
+    }
+    const totalMonthlyDrain = revLoans.reduce((s,l)=>s+(l.p-l.r),0);
+    text += carryForwardAmortAdvisory(result.carry);
+    if(!skippedAmort.length && revLoans.length>0){
+      text += buildExitAdvisory(result.carry, totalMonthlyDrain);
+    }
+
+  } else if(skippedRev.length>0){
+    const penTotal = skippedRev.reduce((t,l)=>t+Math.round(l.p*0.05),0);
+    const totalDrain = skippedRev.reduce((t,l)=>t+(l.p-l.r),0);
+    const largestSkipped = [...skippedRev].sort((a,b)=>b.r-a.r)[0];
+    text = `<strong>Key learning:</strong> You skipped ${skippedRev.map(l=>l.n).join(", ")} — but revolving loans are not free to hold. Each one has a monthly drain (the gap between what you pay and what you re-borrow). Skipping ${largestSkipped.n} triggered ${fmt(penTotal)} in automatic penalties — far more than its drain of ${fmt(largestSkipped.p-largestSkipped.r)}. The correct move: sort by highest re-borrow first and attempt all revolving loans while your full cash is available before any advance is deducted. They are expensive to miss and relatively cheap to cycle.`;
+    text += carryForwardAmortAdvisory(result.carry);
+
+  } else if(result.fails.length>0){
+    const failAmort = result.fails.filter(l=>l.t==="amort");
+    const failRev = result.fails.filter(l=>l.r>0);
+    text = `<strong>Partial coverage.</strong> `;
+    if(failRev.length) text += `${failRev.map(l=>l.n).join(", ")} could not be paid — auto-penalty applies. `;
+    if(failAmort.length) text += `For ${failAmort.map(l=>l.n).join(", ")}: contact the lender before the due date and request a 30-day extension. Only amortised loans offer this option. `;
+    text += `Do not take new revolving credit to cover this gap.`;
+    text += carryForwardAmortAdvisory(result.carry);
+
+  } else {
+    text = `<strong>Good work.</strong> `;
+    if(result.carry>0) text += `${fmt(result.carry)} is your carry-forward to next month — applied first before monthly cash. `;
+    text += carryForwardAmortAdvisory(result.carry);
+    if(!skippedAmort.length){
+      const totalDrainGW = revLoans.reduce((s,l)=>s+(l.p-l.r),0);
+      text += buildExitAdvisory(result.carry, totalDrainGW);
+    }
+  }
+
+  // Escalation summary — append after main coach text if any loans have arrears
+  // All loans with consecutive missed payments — revolving and non-revolving tracked separately
+  const escalatedAll  = p.loans.filter(l => !G.exitedLoanIds.has(l.id) && (G.unpaidMonths.get(l.id)||0) > 0);
+  const escalatedRev  = escalatedAll.filter(l => l.r > 0);
+  const escalatedOther= escalatedAll.filter(l => l.r === 0);
+
+  if(escalatedAll.length > 0){
+    const urgentRev    = escalatedRev.filter(l   => (G.unpaidMonths.get(l.id)||0) >= 3);
+    const highRev      = escalatedRev.filter(l   => (G.unpaidMonths.get(l.id)||0) === 2);
+    const warnRev      = escalatedRev.filter(l   => (G.unpaidMonths.get(l.id)||0) === 1);
+    const urgentOther  = escalatedOther.filter(l => (G.unpaidMonths.get(l.id)||0) >= 3);
+    const highOther    = escalatedOther.filter(l => (G.unpaidMonths.get(l.id)||0) === 2);
+    const warnOther    = escalatedOther.filter(l => (G.unpaidMonths.get(l.id)||0) === 1);
+
+    // Revolving escalation — credit access language
+    if(urgentRev.length > 0){
+      text += `<br><br><strong style="color:var(--red)">🚨 URGENT — ${urgentRev.map(l=>l.n).join(', ')}:</strong>`
+            + ` ${urgentRev.length===1?'This revolving loan has':'These revolving loans have'} been missed for 3 or more consecutive cycles.`
+            + ` Digital lenders are required to file a CRB default notice at 90 days.`
+            + ` Your digital credit access across all platforms is now at risk.`
+            + ` <strong>Stop borrowing new credit immediately. Contact each lender today</strong>`
+            + ` and request a repayment plan or consolidation into a single structured product.`;
+    } else if(highRev.length > 0){
+      text += `<br><br><strong style="color:var(--amber)">⚡ HIGH ALERT — ${highRev.map(l=>l.n).join(', ')}:</strong>`
+            + ` 2 consecutive cycles missed. ${highRev.length===1?'This lender is':'These lenders are'}`
+            + ` likely reducing your borrowing limit and may suspend access next cycle.`
+            + ` Pay now and restore the cycle — or engage the lender to restructure.`
+            + ` A third miss significantly raises your CRB risk.`;
+    } else if(warnRev.length > 0){
+      text += `<br><br><strong>Revolving alert — ${warnRev.map(l=>l.n).join(', ')}:</strong>`
+            + ` 1 cycle missed. Penalty has been auto-applied.`
+            + ` Restoring this cycle next month protects your credit score and borrowing limit.`;
+    }
+
+    // Non-revolving escalation — balance accumulation language
+    if(urgentOther.length > 0){
+      text += `<br><br><strong style="color:var(--red)">🚨 URGENT — ${urgentOther.map(l=>l.n).join(', ')}:</strong>`
+            + ` ${urgentOther.length===1?'This loan has':'These loans have'} outstanding arrears for 3+ months.`
+            + ` At 90 days, lenders file a CRB default notice.`
+            + ` <strong>Contact each lender today.</strong>`
+            + ` Request a formal restructure or top-up consolidation into a single manageable instalment.`
+            + ` Acting now protects your credit record.`;
+    } else if(highOther.length > 0){
+      text += `<br><br><strong style="color:var(--amber)">⚡ HIGH ALERT — ${highOther.map(l=>l.n).join(', ')}:</strong>`
+            + ` 2 consecutive months of arrears.`
+            + ` Lenders will now initiate formal recovery. Contact each lender proactively —`
+            + ` propose a restructure or explore a top-up loan to consolidate arrears.`;
+    } else if(warnOther.length > 0){
+      text += `<br><br><strong>Arrears reminder — ${warnOther.map(l=>l.n).join(', ')}:</strong>`
+            + ` Outstanding balance from last month.`
+            + ` Contact ${warnOther.length===1?'the lender':'each lender'} before the due date`
+            + ` — proactive communication protects your future credit access.`;
+    }
+  }
+
+  return text;
+}
+
+// ── Performance badge ────────────────────────────────────────────────────────
+function perfBadge(score, result) {
+  const skippedRev = result.skipped.filter(l=>l.r>0).length;
+  const allNonAdvCovered = result.fails.length===0 && result.skipped.filter(l=>l.t!=="adv").length===0 && result.partials.length===0;
+  const allDeployedPartial = result.fails.length===0 && result.skipped.filter(l=>l.t!=="adv").length===0 && result.partials.length>0;
+  const skippedAdv = result.skipped.filter(l=>l.t==="adv").length;
+  if(allNonAdvCovered && skippedAdv===0 && score.tokens>=8) return {cls:"perf-excellent",label:"★ Excellent — optimal play"};
+  if(allDeployedPartial) return {cls:"perf-good",label:"✓ Good — cash fully deployed, partials submitted"};
+  if(allNonAdvCovered && skippedAdv>0)  return {cls:"perf-good",label:"✓ Good — note: advance deferred"};
+  if(allNonAdvCovered || score.tokens>=6) return {cls:"perf-good",label:"✓ Good — obligations covered"};
+  if(skippedRev>0) return {cls:"perf-learn",label:"⚡ Learning moment — revolving penalty triggered"};
+  return {cls:"perf-learn",label:"⚡ Learning moment — explore a different priority order"};
+}
+
+// ── Screen: Profile Select ───────────────────────────────────────────────────
+function renderProfileGrid() {
+  const grid = document.getElementById("profileGrid");
+  grid.innerHTML = "";
+  Object.entries(PROFILES).forEach(([key,p]) => {
+    const div = document.createElement("div");
+    div.className = "profile-card" + (G.profileKey===key?" sel":"");
+    div.onclick = () => selectProfile(key);
+    div.innerHTML = `
+      <div class="sev ${SEV_CLASS[p.sev]}">${SEV_LABEL[p.sev]}</div>
+      <div class="pc-avatar">${p.name.slice(0,2).toUpperCase()}</div>
+      <div class="pc-name">${p.name}</div>
+      <div class="pc-role">${p.role}</div>
+      <div class="pc-city">${p.city} · Age ${p.age}</div>
+      ${p.lesson ? `<div style="font-size:10px;color:var(--blue2);margin-top:7px;line-height:1.5;font-style:italic;border-top:1px solid var(--border);padding-top:6px">${p.lesson}</div>` : ''}`;
+    grid.appendChild(div);
+  });
+}
+
+function selectProfile(key) {
+  G.profileKey = key;
+  G.totalTokens = 0;
+  G.selections = new Set();
+  G.act = 1; G.currentMonth = 1; G.cumulativeCarry = 0;
+  G.exitedLoanIds = new Set(); G.exitSelections = new Set();
+  G.monthHistory = []; G.monthsPaid = new Map();
+  G.unpaidBalances = new Map(); G.unpaidMonths = new Map();
+  G.act3Option = null; G.act3Seed = 0; G.act3Chosen = new Set(); G.act3Allocs = {}; G.act3MonthlyContrib = 0; G.act3AmortMo = 0; G.act3RemainingAmort = [];
+  // Reset all persistent DOM elements so no stale data bleeds into the next play
+  document.getElementById('tokenTotal').textContent = '0';
+  document.getElementById('roundTokens').textContent = '+0';
+  const bd = document.getElementById('tokenBreakdown'); if(bd) bd.innerHTML = '';
+  const pb = document.getElementById('perfBadge'); if(pb){ pb.className='perf-badge'; pb.textContent=''; }
+  const ec = document.getElementById('escapeBarContainer'); if(ec) ec.innerHTML = '';
+  const cl = document.getElementById('consequenceList'); if(cl) cl.innerHTML = '';
+  const ss = document.getElementById('summaryStats'); if(ss) ss.innerHTML = '';
+  const ct = document.getElementById('coachText'); if(ct) ct.innerHTML = '';
+  renderProfileGrid();
+  document.getElementById("startBtn").style.display = "block";
+}
+
+function showProfiles() {
+  // Full state reset so the header shows a clean slate when browsing profiles
+  G.profileKey = null;
+  G.totalTokens = 0;
+  G.selections = new Set();
+  G.act = 1; G.currentMonth = 1; G.cumulativeCarry = 0;
+  G.exitedLoanIds = new Set(); G.exitSelections = new Set();
+  G.monthHistory = []; G.monthsPaid = new Map();
+  G.unpaidBalances = new Map(); G.unpaidMonths = new Map();
+  G.act3Option = null; G.act3Seed = 0; G.act3Chosen = new Set();
+  G.act3Allocs = {}; G.act3MonthlyContrib = 0; G.act3AmortMo = 0;
+  document.getElementById('tokenTotal').textContent = '0';
+  document.getElementById('roundTokens').textContent = '+0';
+  switchScreen("s-profiles");
+  renderProfileGrid();
+}
+
+// ── Screen: Decision ─────────────────────────────────────────────────────────
+function goToDecision() {
+  if(!G.profileKey) return;
+  G.selections = new Set();
+  // No pre-selections — player makes all choices from scratch
+  renderDecision();
+  switchScreen("s-decision");
+}
+
+function replayProfile() {
+  // Full reset — identical to selecting the profile fresh
+  G.totalTokens = 0;
+  G.selections = new Set();
+  G.act = 1; G.currentMonth = 1; G.cumulativeCarry = 0;
+  G.exitedLoanIds = new Set(); G.exitSelections = new Set();
+  G.monthHistory = []; G.monthsPaid = new Map();
+  G.unpaidBalances = new Map(); G.unpaidMonths = new Map();
+  G.act3Option = null; G.act3Seed = 0; G.act3Chosen = new Set(); G.act3Allocs = {}; G.act3MonthlyContrib = 0; G.act3AmortMo = 0; G.act3RemainingAmort = [];
+  // Reset all persistent DOM elements
+  document.getElementById('tokenTotal').textContent = '0';
+  document.getElementById('roundTokens').textContent = '+0';
+  const bd = document.getElementById('tokenBreakdown'); if(bd) bd.innerHTML = '';
+  const pb = document.getElementById('perfBadge'); if(pb){ pb.className='perf-badge'; pb.textContent=''; }
+  const ec = document.getElementById('escapeBarContainer'); if(ec) ec.innerHTML = '';
+  const cl = document.getElementById('consequenceList'); if(cl) cl.innerHTML = '';
+  const ss = document.getElementById('summaryStats'); if(ss) ss.innerHTML = '';
+  const ct = document.getElementById('coachText'); if(ct) ct.innerHTML = '';
+  goToDecision();
+}
+
+function renderDecision() {
+  const p = PROFILES[G.profileKey];
+  const initials = p.name.slice(0,2).toUpperCase();
+
+  // Always reset rules box to Act 1 content — Act 2 overwrites this DOM node
+  // so returning from Act 2 must restore it explicitly
+  document.querySelector('.rules-box').innerHTML =
+    `<strong>Your challenge:</strong> Tick the loans you believe will cover the most obligations with this cash.
+     The sequence matters — each revolving loan costs more than it returns (pay &gt; re-borrow),
+     so the order you select them in changes what cash is left for the next one.
+     <em>No loans are pre-selected. The choice — and the learning — is yours.</em>`;
+
+  document.getElementById("decisionPill").innerHTML = `
+    <div class="pill-avatar">${initials}</div>
+    <div>
+      <div class="pill-name">${p.name} — ${p.role}</div>
+      <div class="pill-sub">${p.city} · Income: ${fmt(p.income)}/mo</div>
+    </div>
+    <div class="sev ${SEV_CLASS[p.sev]}" style="margin-left:auto">${SEV_LABEL[p.sev]}</div>`;
+
+  updateCashDisplay();
+
+  const list = document.getElementById("loanList");
+  list.innerHTML = "";
+  p.loans.forEach(l => {
+    const isAdv = l.t==="adv";
+    const isRev = l.r>0;
+    const isAmort = l.r===0&&l.t==="amort";
+    const sel = G.selections.has(l.id);
+    const typeClass = isAdv?"lc-adv":isRev?"lc-rev":"lc-amort";
+    const typeLabel = isAdv?"Advance":isRev?"Revolving":"Amortised";
+    const drain = isRev ? l.p - l.r : 0;
+    const monthsLeft = (!isRev && !isAdv) ? effectiveMonths(l) : null;
+    const closingSoon = monthsLeft !== null && monthsLeft <= 6;
+    const monthTag = monthsLeft
+      ? `<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:6px;${closingSoon?'background:rgba(0,200,83,.15);color:var(--green)':'background:var(--bg3);color:var(--text3)'}">${monthsLeft} mo left${closingSoon?' · closes in game':''}</span>`
+      : '';
+    const due = effectiveP(l);
+    const unpaidBal = G.unpaidBalances.get(l.id) || 0;
+    const advDetail = unpaidBal > 0
+      ? `Remaining balance: ${fmt(unpaidBal)} · One-time · Cleared permanently on full payment`
+      : `Pay ${fmt(l.p)} · One-time · Cleared permanently on payment`;
+    const amortDetail = unpaidBal > 0
+      ? `${fmt(l.p)} instalment + <strong style="color:var(--amber)">${fmt(unpaidBal)} unpaid from previous month${G.unpaidMonths.get(l.id)>1?'s':''}</strong> = ${fmt(due)} due`
+      : `${fmt(l.p)} · ${monthsLeft?`${monthsLeft} of ${l.totalMonths||'?'} months remaining`:'Fixed instalment'}`;
+    const revPenAccum = isRev ? (G.unpaidBalances.get(l.id) || 0) : 0;
+    const revDetail = revPenAccum > 0
+      ? `Pay ${fmt(l.p)} + <strong style="color:var(--red)">${fmt(revPenAccum)} accumulated penalties</strong> = ${fmt(l.p + revPenAccum)} due · Re-borrow ${fmt(l.r)}`
+      : `Pay ${fmt(l.p)} · Re-borrow ${fmt(l.r)} · Monthly drain ${fmt(drain)}`;
+    const detail = isRev ? revDetail : isAdv ? advDetail : amortDetail;
+
+    const card = document.createElement("div");
+    card.className = `loan-card${sel?" selected":""}`;
+    card.id = `lc-${l.id}`;
+    card.onclick = () => toggleLoan(l.id);
+    card.innerHTML = `
+      <span class="lc-type ${typeClass}">${typeLabel}</span>
+      <div class="lc-info">
+        <div class="lc-name">${l.n}${monthTag}</div>
+        <div class="lc-detail">${detail}</div>
+      </div>
+      <div class="toggle-btn">${sel?"✓":""}</div>`;
+    list.appendChild(card);
+  });
+}
+
+function toggleLoan(id) {
+  if(G.selections.has(id)) G.selections.delete(id);
+  else G.selections.add(id);
+  const p = PROFILES[G.profileKey];
+  const l = p.loans.find(x=>x.id===id);
+  const card = document.getElementById(`lc-${id}`);
+  const btn = card.querySelector(".toggle-btn");
+  if(G.selections.has(id)){ card.classList.add("selected"); if(btn) btn.textContent="✓"; }
+  else { card.classList.remove("selected"); if(btn) btn.textContent=""; }
+  if(G.act === 2) updateCashDisplayAct2();
+  else updateCashDisplay();
+}
+
+// Route confirm button to the correct handler based on current act
+// This is the single source of truth for confirm — no more relying on .onclick overrides
+function confirmRoute() {
+  if(G.act === 2) confirmAct2Payments();
+  else confirmPayments();
+}
+
+function updateCashDisplay() {
+  const p = PROFILES[G.profileKey];
+  const remaining = virtualCash(p, G.selections);
+  const used = p.cash - remaining;
+  const el  = document.getElementById("cashDisplay");
+  const sub = document.getElementById("cashSub");
+  if(G.selections.size === 0){
+    el.textContent = fmt(p.cash);
+    el.className = "cm-val cm-ok";
+    sub.textContent = `${fmt(p.cash)} available — tick loans below`;
+  } else if(remaining > 0){
+    el.textContent = fmt(remaining);
+    el.className = "cm-val cm-ok";
+    sub.innerHTML = `${fmt(p.cash)} monthly cash · ${fmt(used)} used → <strong style="color:var(--green)">${fmt(remaining)} carry-forward if all selected loans succeed</strong>`;
+  } else if(remaining === 0){
+    el.textContent = fmt(0);
+    el.className = "cm-val cm-warn";
+    sub.textContent = "Cash fully allocated — no carry-forward";
+  } else {
+    el.textContent = fmt(remaining);
+    el.className = "cm-val cm-bad";
+    sub.textContent = "Not enough cash to cover all selections";
+  }
+}
+
+// ── Screen: Consequence ──────────────────────────────────────────────────────
+function confirmPayments() {
+  const p = PROFILES[G.profileKey];
+  const result = gameSimulate(p, G.selections);
+  const score = scoreRound(p, result);
+  G.totalTokens += score.tokens;
+  document.getElementById("tokenTotal").textContent = G.totalTokens;
+  // Increment monthsPaid for each successfully paid amortised loan
+  result.loans.filter(l=>l.t==="amort"&&l.ok).forEach(l=>{
+    G.monthsPaid.set(l.id, (G.monthsPaid.get(l.id)||0) + 1);
+  });
+  // Store Act 1 carry-forward for Act 2
+  G.cumulativeCarry = result.carry;
+  G.act = 1; G.currentMonth = 1;
+  // Auto-exit paid advances — they are one-time obligations; once paid they vanish permanently
+  // Auto-exit advance ONLY if fully paid (no unpaid balance remains)
+  result.loans.filter(l=>l.t==="adv"&&l.ok&&!(G.unpaidBalances.get(l.id)>0)).forEach(l=>G.exitedLoanIds.add(l.id));
+
+  // Performance badge
+  const pb = perfBadge(score, result);
+  const pbEl = document.getElementById("perfBadge");
+  pbEl.className = "perf-badge " + pb.cls;
+  pbEl.textContent = pb.label;
+
+  // Token header
+  document.getElementById("roundTokens").textContent = (score.tokens>=0?"+":"")+score.tokens;
+  const breakdown = document.getElementById("tokenBreakdown");
+  breakdown.innerHTML = score.lines.map(l=>`<div class="rh-line ${l.c}">${l.t}</div>`).join("");
+
+  // Update unpaid balances and escalation counters — ALL loan types
+  result.loans.forEach(l => {
+    if(l.ok){
+      // Fully paid — clear any unpaid balance and reset escalation
+      G.unpaidBalances.delete(l.id);
+      G.unpaidMonths.delete(l.id);
+    } else if(l.r > 0){
+      // Revolving missed (skipped or failed).
+      // The cycle RESETS to original p each month — the principal obligation does not accumulate.
+      // Only the PENALTY FEE accumulates as an outstanding amount separate from the cycle.
+      // Penalty rate: 5% of the original p per missed cycle (auto-pen and ext-fee lenders).
+      const penalty = Math.round(l.p * 0.05);
+      G.unpaidBalances.set(l.id, (G.unpaidBalances.get(l.id) || 0) + penalty);
+      G.unpaidMonths.set(l.id, (G.unpaidMonths.get(l.id)||0) + 1);
+    } else if(l.partial){
+      // Partial payment — carry remaining gap forward
+      G.unpaidBalances.set(l.id, l.gap);
+      G.unpaidMonths.set(l.id, (G.unpaidMonths.get(l.id)||0) + 1);
+    } else {
+      // Fail or skipped — from the lender's perspective both are unpaid
+      G.unpaidBalances.set(l.id, l.gap);
+      G.unpaidMonths.set(l.id, (G.unpaidMonths.get(l.id)||0) + 1);
+    }
+  });
+
+  // Consequence cards — runs after update block so escalation values are current
+  const cList = document.getElementById("consequenceList");
+  cList.innerHTML = "";
+  p.loans.forEach(l => {
+    const msg = consequenceMsg(l, result);
+    if(!msg) return;
+    const card = document.createElement("div");
+    card.className = `cq-card ${msg.cls}`;
+    card.innerHTML = `<div class="cq-icon">${msg.icon}</div><div class="cq-body"><div class="cq-name">${msg.name}</div><div class="cq-msg">${msg.msg}</div></div>`;
+    cList.appendChild(card);
+  });
+
+  // Summary stats
+  const covered = result.loans.filter(l=>l.ok).length;
+  const total = p.loans.length;
+  const penCount = result.skipped.filter(l=>l.r>0).length + result.fails.filter(l=>l.r>0).length;
+  document.getElementById("summaryStats").innerHTML = `
+    <div class="stat-box"><div class="stat-label">Obligations covered</div><div class="stat-val" style="color:${covered===total?"var(--green)":"var(--amber)"}">${covered}/${total}</div></div>
+    <div class="stat-box"><div class="stat-label">Carry-forward → Act 2</div>
+      <div class="stat-val" style="color:${result.carry>0?"var(--green)":"var(--text2)"}">${fmt(result.carry)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">+ ${fmt(p.cash)} base = <strong style="color:var(--blue2)">${fmt(result.carry + p.cash)}</strong> available Month 2</div>
+    </div>`;
+
+  // Coach — unpaid balances already updated above, before consequence cards
+  document.getElementById("coachText").innerHTML = coachDebrief(p, result, score);
+
+  // Act 1 → add "Continue to Act 2" button
+  const btns = document.getElementById('consequenceBtns');
+  btns.innerHTML = `
+    <div style="background:linear-gradient(135deg,rgba(41,121,255,0.1),rgba(124,77,255,0.1));border:1px solid rgba(124,77,255,0.25);border-radius:var(--r);padding:12px 16px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:4px">Act 2 — Escape</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7">Month 1 was the warm-up. Now the real question: can you systematically dismantle every revolving loan — one exit at a time — before month 6 closes? Your carry-forward is the engine. Don't waste a single shilling.</div>
+    </div>
+    <button class="btn btn-pri" onclick="startAct2()" style="flex:1;background:linear-gradient(135deg,var(--blue),var(--purple))">Enter Act 2 — Start the escape →</button>
+    <button class="btn btn-sec" onclick="showProfiles()">Try another profile</button>
+    <button class="btn btn-sec btn-full" onclick="replayProfile()" style="margin-top:6px;width:100%">Replay Act 1</button>`;
+
+  switchScreen("s-consequence");
+}
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+function switchScreen(id) {
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  // Always return to top so the AkiliGame header is the first thing the player sees
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+renderProfileGrid();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ACT 2 — ESCAPE ENGINE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function getActiveLoans(p) {
+  return p.loans.filter(l => !G.exitedLoanIds.has(l.id));
+}
+
+function updatePips() {
+  for(let i=1; i<=6; i++){
+    const pip = document.getElementById(`pip-m${i}`);
+    if(!pip) continue;
+    pip.className = 'act-pip' + (i < G.currentMonth ? ' done' : i===G.currentMonth ? ' active' : '');
+  }
+  const act3pip = document.getElementById('pip-act3');
+  if(act3pip) act3pip.className = 'act-pip' + (G.act===3 ? ' active' : '');
+}
+
+function totalRevDrain(p) {
+  return getActiveLoans(p).filter(l=>l.r>0).reduce((s,l)=>s+(l.p-l.r),0);
+}
+
+// ── Start Act 2 ───────────────────────────────────────────────────────────────
+function startAct2() {
+  G.act = 2;
+  G.currentMonth = 2;
+  // cumulativeCarry already set from Act 1 result
+  goToAct2Decision();
+}
+
+function goToAct2Decision() {
+  G.selections = new Set();
+  // No pre-selection — player decides which obligations to attempt each month
+  renderAct2Decision();
+  switchScreen('s-decision');
+  updatePips();
+}
+
+function renderAct2Decision() {
+  const p = PROFILES[G.profileKey];
+  const initials = p.name.slice(0,2).toUpperCase();
+  const availCash = p.cash + G.cumulativeCarry;
+  const activeLoans = getActiveLoans(p);
+  const revCount = activeLoans.filter(l=>l.r>0).length;
+  const drain = totalRevDrain(p);
+
+  // Month header
+  document.getElementById('decisionPill').innerHTML = `
+    <div class="month-header" style="width:100%;margin-bottom:0">
+      <div class="month-num">M${G.currentMonth}</div>
+      <div>
+        <div style="font-size:13px;font-weight:600">${p.name} — ${p.role}</div>
+        <div class="month-sub">Act 2 · Escape · ${revCount} revolving loan${revCount!==1?'s':''} to close out · ${fmt(drain)}/month still draining · Month ${G.currentMonth} of 6</div>
+      </div>
+      <div class="sev ${SEV_CLASS[p.sev]}" style="margin-left:auto">${SEV_LABEL[p.sev]}</div>
+    </div>`;
+
+  // Cash display — single number = total available; sub-line shows breakdown
+  const cashEl = document.getElementById('cashDisplay');
+  const subEl  = document.getElementById('cashSub');
+  cashEl.textContent = fmt(availCash);
+  cashEl.className = 'cm-val cm-ok';
+  subEl.innerHTML = G.cumulativeCarry > 0
+    ? `<span style="color:var(--blue2)">${fmt(G.cumulativeCarry)} carried in</span> + ${fmt(p.cash)} monthly = <strong>${fmt(availCash)}</strong> total available — tick loans below`
+    : `${fmt(p.cash)} available — tick loans below`;
+
+  // Rules box — Act 2 context
+  const exitedAll  = [...G.exitedLoanIds].map(id=>p.loans.find(l=>l.id===id)).filter(Boolean);
+  const exitedAdvs = exitedAll.filter(l=>l.t==="adv");
+  const exitedRevs = exitedAll.filter(l=>l.r>0);
+  let exitedNote = "";
+  if(exitedAdvs.length>0) exitedNote += `<br><span style="color:var(--green)">✓ Advance${exitedAdvs.length>1?"s":""} cleared (one-time): ${exitedAdvs.map(l=>l.n).join(", ")} — will not appear again</span>`;
+  if(exitedRevs.length>0) exitedNote += `<br><span style="color:var(--green)">✓ Revolving exits: ${exitedRevs.map(l=>l.n).join(", ")} — drain eliminated permanently</span>`;
+  document.querySelector('.rules-box').innerHTML = `
+    <strong>The escape is on.</strong>
+    Every month you cover your obligations, carry-forward builds.
+    When it reaches a revolving loan's principal — exit it. Permanently.
+    That loan's monthly drain disappears forever, and the snowball accelerates.
+    <em>Highest drain first. No new revolving credit. Not one shilling.</em>${exitedNote}`;
+
+  // ── Exit opportunities banner (top of decision screen) ──────────────────
+  const exitBanner = document.getElementById('act2ExitBanner');
+  if(exitBanner){
+    G.exitSelections = new Set();
+    const revForExit = getActiveLoans(p).filter(l=>l.r>0);
+    // Sequential simulation — only show loans that can actually be afforded in order
+    const { exitable: exitCands, remainingCarry: exitRem, nextTarget: exitNext } =
+      globalSequentialExits(G.cumulativeCarry, revForExit);
+
+    if(exitCands.length > 0){
+      const topDrain = exitCands[0];
+      exitBanner.style.display = 'block';
+      exitBanner.innerHTML = `
+        <div class="exit-panel">
+          <div class="exit-title">🎯 Exit available — ${exitCands.length} revolving loan${exitCands.length>1?'s':''} within your carry-forward of ${fmt(G.cumulativeCarry)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">
+            Tick the loans to exit permanently before making this month's payments.
+            Each exit is deducted from carry-forward in sequence — the remainder stays in your available cash.
+            <strong>${topDrain.n}</strong> eliminates the most drain (${fmt(topDrain.p-topDrain.r)}/month) — start here.
+            ${exitRem > 0 ? `<strong>${fmt(exitRem)} carry remains</strong> after all exits below.` : ''}
+          </div>
+          <div id="exitCardList"></div>
+          <div style="font-size:12px;margin-top:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--r2);display:flex;justify-content:space-between;align-items:center">
+            <span>Carry after exits: <span id="exitCarryRemain" style="color:var(--blue2);font-family:var(--mono);font-weight:bold">${fmt(G.cumulativeCarry)}</span>
+            <span id="exitCarryNote" style="color:var(--text3);font-size:11px;margin-left:6px">— available for payments below</span></span>
+            <button class="btn btn-sec" style="font-size:11px;padding:5px 12px" onclick="applyExitsAndContinue()">Confirm exits ✓</button>
+          </div>
+        </div>`;
+      renderExitCards(p, exitCands);
+    } else {
+      exitBanner.style.display = 'none';
+    }
+  }
+
+  document.querySelector('.section-title').textContent = `Month ${G.currentMonth} obligations — tap to select`;
+
+  // Loan list — active loans minus any pending exits
+  renderAct2LoanList();
+
+  // Override confirm button for Act 2
+  updateCashDisplayAct2();  // confirmRoute() handles Act 1/2 dispatch
+}
+
+function updateCashDisplayAct2() {
+  const p = PROFILES[G.profileKey];
+  const exitCost = [...G.exitSelections].reduce((s,id)=>{const l=p.loans.find(x=>x.id===id);return s+(l?effectiveP(l):0);},0);
+  const effectiveCarry = G.cumulativeCarry - exitCost;
+  const totalAvail = p.cash + effectiveCarry;
+  const remaining = virtualCashAct2(p, G.selections);
+  const used = totalAvail - remaining;
+  const el  = document.getElementById('cashDisplay');
+  const sub = document.getElementById('cashSub');
+
+  // Labels deliberately avoid calling incoming carry "carry-forward"
+  // so the player only sees one thing called "carry-forward": the outgoing amount.
+  const carryLabel = effectiveCarry > 0
+    ? `<span style="color:var(--blue2)">${fmt(effectiveCarry)} carried in</span> + ${fmt(p.cash)} monthly`
+    : `${fmt(p.cash)} monthly cash`;
+
+  if(G.selections.size === 0){
+    el.textContent = fmt(totalAvail);
+    el.className = 'cm-val cm-ok';
+    sub.innerHTML = effectiveCarry > 0
+      ? `${carryLabel} = <strong>${fmt(totalAvail)}</strong> total available — tick loans below`
+      : `${fmt(p.cash)} available — tick loans below`;
+  } else if(remaining > 0){
+    el.textContent = fmt(remaining);
+    el.className = 'cm-val cm-ok';
+    sub.innerHTML = `${carryLabel} · ${fmt(used)} used → <strong style="color:var(--green)">${fmt(remaining)} carry-forward to Month ${G.currentMonth+1}</strong>`;
+  } else if(remaining === 0){
+    el.textContent = fmt(0);
+    el.className = 'cm-val cm-warn';
+    sub.innerHTML = `${carryLabel} · fully allocated — no carry-forward`;
+  } else {
+    el.textContent = fmt(remaining);
+    el.className = 'cm-val cm-bad';
+    sub.innerHTML = `${carryLabel} · <strong style="color:var(--red)">selections exceed available cash</strong>`;
+  }
+}
+
+// ── Virtual cash display — delegates to act2Simulate for guaranteed consistency ──
+// Using a separate calculation function was the root cause of display/confirm divergence.
+// Now both display and confirm use exactly the same code path.
+function virtualCashAct2(p, selected) {
+  return act2Simulate(p, selected).carry;
+}
+
+
+function act2Simulate(p, selected) {
+  const activeLoans = getActiveLoans(p);
+  const exitCost = [...G.exitSelections].reduce((s,id)=>{const l=p.loans.find(x=>x.id===id);return s+(l?effectiveP(l):0);},0);
+  let avail = p.cash + G.cumulativeCarry - exitCost;
+  const res = new Map();
+  const paidRevIds = new Set();
+
+  activeLoans.filter(l=>l.r>0&&selected.has(l.id)).sort((a,b)=>b.r-a.r).forEach(l=>{
+    const due=effectiveP(l);
+    if(avail>=due){avail=avail-due+l.r;res.set(l.id,{...l,ok:true,gap:0,pass:1,due});paidRevIds.add(l.id);}
+  });
+  activeLoans.filter(l=>l.t==='adv'&&selected.has(l.id)).forEach(l=>{
+    const due=effectiveP(l);
+    if(avail>=due){avail-=due;res.set(l.id,{...l,ok:true,gap:0,pass:2,due});}
+    else{const g=due-avail;avail=0;res.set(l.id,{...l,ok:false,gap:g,pass:2,due});}
+  });
+  activeLoans.filter(l=>l.r>0&&selected.has(l.id)&&!paidRevIds.has(l.id)).sort((a,b)=>b.r-a.r).forEach(l=>{
+    const due=effectiveP(l);
+    if(avail>=due){avail=avail-due+l.r;res.set(l.id,{...l,ok:true,gap:0,pass:3,due});}
+    else{const g=due-avail;avail=0;res.set(l.id,{...l,ok:false,gap:g,pass:3,due});}
+  });
+  const amortLoans = activeLoans.filter(l=>l.r===0&&l.t==='amort'&&selected.has(l.id)).sort((a,b)=>a.p-b.p);
+  amortLoans.forEach(l=>{
+    const due=effectiveP(l);
+    if(avail>=due){avail-=due;res.set(l.id,{...l,ok:true,gap:0,partial:false,pass:4,due});}
+  });
+  const unpaidAmort = amortLoans.filter(l=>!res.has(l.id));
+  if(unpaidAmort.length>0){
+    if(avail>0){
+      const tot=unpaidAmort.reduce((s,l)=>s+effectiveP(l),0);
+      unpaidAmort.forEach(l=>{const due=effectiveP(l);const amt=Math.round(due/tot*avail);res.set(l.id,{...l,ok:false,partial:true,partialAmt:amt,gap:due-amt,pass:4,due});});
+      avail=0;
+    } else {
+      unpaidAmort.forEach(l=>{const due=effectiveP(l);res.set(l.id,{...l,ok:false,partial:false,partialAmt:0,gap:due,pass:4,due});});
+    }
+  }
+  activeLoans.forEach(l=>{if(!res.has(l.id))res.set(l.id,{...l,ok:false,gap:effectiveP(l),skipped:true});});
+  const loans=activeLoans.map(l=>res.get(l.id));
+  return {
+    loans, carry:avail,
+    fails:loans.filter(l=>!l.ok&&!l.skipped&&!l.partial),
+    partials:loans.filter(l=>l.partial),
+    skipped:loans.filter(l=>l.skipped),
+    totalP:activeLoans.reduce((s,l)=>s+l.p,0),
+    totalDrain:activeLoans.filter(l=>l.r>0).reduce((s,l)=>s+(l.p-l.r),0)
+  };
+}
+
+// ── Confirm Act 2 payments ────────────────────────────────────────────────────
+function confirmAct2Payments() {
+  const p = PROFILES[G.profileKey];
+  // Apply any exits the player confirmed at the top of this month
+  G.exitSelections.forEach(id => {
+    const l = p.loans.find(x=>x.id===id);
+    if(l && !G.exitedLoanIds.has(l.id)){
+      G.exitedLoanIds.add(id);
+      G.cumulativeCarry -= effectiveP(l); // full exit cost: l.p + penalties
+      G.totalTokens += 10;
+    }
+  });
+  document.getElementById('tokenTotal').textContent = G.totalTokens;
+  G.exitSelections = new Set();
+
+  const result = act2Simulate(p, G.selections);
+
+  // Increment monthsPaid BEFORE consequence cards render — effectiveMonths() reads this
+  result.loans.filter(l=>l.t==="amort"&&l.ok).forEach(l=>{
+    G.monthsPaid.set(l.id, (G.monthsPaid.get(l.id)||0) + 1);
+  });
+
+  // Score this month
+  const score = scoreRound(p, result);
+  G.totalTokens += score.tokens;
+  document.getElementById('tokenTotal').textContent = G.totalTokens;
+
+  // Update perf badge, token header, breakdown (reuse Act 1 logic)
+  const pb = perfBadge(score, result);
+  document.getElementById('perfBadge').className = 'perf-badge ' + pb.cls;
+  document.getElementById('perfBadge').textContent = pb.label;
+  document.getElementById('roundTokens').textContent = (score.tokens>=0?'+':'')+score.tokens;
+  document.getElementById('tokenBreakdown').innerHTML = score.lines.map(l=>`<div class="rh-line ${l.c}">${l.t}</div>`).join('');
+
+  // Update unpaid balances and escalation counters — ALL loan types
+  result.loans.forEach(l => {
+    if(l.ok){
+      // Fully paid — clear any unpaid balance and reset escalation
+      G.unpaidBalances.delete(l.id);
+      G.unpaidMonths.delete(l.id);
+    } else if(l.r > 0){
+      // Revolving missed (skipped or failed).
+      // The cycle RESETS to original p each month — the principal obligation does not accumulate.
+      // Only the PENALTY FEE accumulates as an outstanding amount separate from the cycle.
+      // Penalty rate: 5% of the original p per missed cycle (auto-pen and ext-fee lenders).
+      const penalty = Math.round(l.p * 0.05);
+      G.unpaidBalances.set(l.id, (G.unpaidBalances.get(l.id) || 0) + penalty);
+      G.unpaidMonths.set(l.id, (G.unpaidMonths.get(l.id)||0) + 1);
+    } else if(l.partial){
+      // Partial payment — carry remaining gap forward
+      G.unpaidBalances.set(l.id, l.gap);
+      G.unpaidMonths.set(l.id, (G.unpaidMonths.get(l.id)||0) + 1);
+    } else {
+      // Fail or skipped — from the lender's perspective both are unpaid
+      G.unpaidBalances.set(l.id, l.gap);
+      G.unpaidMonths.set(l.id, (G.unpaidMonths.get(l.id)||0) + 1);
+    }
+  });
+
+  // Consequence cards — runs after update block so escalation values are current
+  const cList = document.getElementById('consequenceList');
+  cList.innerHTML = '';
+  getActiveLoans(p).forEach(l => {
+    const msg = consequenceMsg(l, result);
+    if(!msg) return;
+    const card = document.createElement('div');
+    card.className = `cq-card ${msg.cls}`;
+    card.innerHTML = `<div class="cq-icon">${msg.icon}</div><div class="cq-body"><div class="cq-name">${msg.name}</div><div class="cq-msg">${msg.msg}</div></div>`;
+    cList.appendChild(card);
+  });
+
+  // Summary stats
+  const covered = result.loans.filter(l=>l.ok).length;
+  const total = getActiveLoans(p).length;
+  document.getElementById('summaryStats').innerHTML = `
+    <div class="stat-box"><div class="stat-label">Obligations covered</div><div class="stat-val" style="color:${covered===total?'var(--green)':'var(--amber)'}">${covered}/${total}</div></div>
+    <div class="stat-box">
+      <div class="stat-label">Carry-forward to Month ${G.currentMonth+1}</div>
+      <div class="stat-val" style="color:${result.carry>0?'var(--green)':'var(--text2)'}">${fmt(result.carry)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">This is the first amount allocated next month. Monthly cash (${fmt(p.cash)}) tops up after.</div>
+    </div>`;
+
+  // Coach — unpaid balances already updated above, before consequence cards
+  document.getElementById('coachText').innerHTML = coachDebrief(p, result, score);
+  // Store this month's carry
+  G.cumulativeCarry = result.carry;
+  // Auto-exit paid advances — one-time obligations; paid once, never appear again
+  // Auto-exit advance ONLY if fully paid (no unpaid balance remains)
+  result.loans.filter(l=>l.t==="adv"&&l.ok&&!(G.unpaidBalances.get(l.id)>0)).forEach(l=>G.exitedLoanIds.add(l.id));
+  G.monthHistory.push({ month: G.currentMonth, carry: result.carry, exits:[] });
+
+  // Exit opportunities computed and stored — shown at START of next month's decision screen
+  G.exitSelections = new Set();
+  // (exit panel has been moved to renderAct2Decision — no exit UI on consequence screen)
+
+  // ── Escape progress bar ───────────────────────────────────────────────────
+  const totalRev = p.loans.filter(l=>l.r>0).length;
+  const exitedCount = [...G.exitedLoanIds].filter(id=>p.loans.find(l=>l.id===id&&l.r>0)).length;
+  const pct = totalRev > 0 ? Math.round(exitedCount/totalRev*100) : 100;
+  const activeRevNow = getActiveLoans(p).filter(l=>l.r>0);
+  const allExited = activeRevNow.length === 0;
+
+  // Carry-forward summary — use result.carry (this month's output), not G.cumulativeCarry (stale)
+  const newCarry = result.carry;
+  const { exitable: seqExits, remainingCarry: seqRem, nextTarget: seqNext } =
+    globalSequentialExits(newCarry, activeRevNow);
+  let carryNote = '';
+  if(newCarry > 0){
+    const nextM = G.currentMonth+1 <= 6 ? `Month ${G.currentMonth+1}` : 'your final month';
+    if(seqExits.length > 0){
+      const drainSaved = seqExits.reduce((s,l)=>s+(l.p-l.r),0);
+      carryNote = `<div style="font-size:12px;color:var(--blue2);margin-top:4px">
+        🎯 ${fmt(newCarry)} carry-forward — enough to sequentially exit
+        <strong>${seqExits.map(l=>l.n).join(' then ')}</strong> at the start of ${nextM}
+        (saves ${fmt(drainSaved)}/month in drain).
+        ${seqRem > 0 ? fmt(seqRem)+' carry remains after.' : 'Carry fully deployed into exits.'}
+        ${seqNext ? `Next target after that: <strong>${seqNext.n}</strong> (need ${fmt(seqNext.r)} carry).` : ''}
+        <span style="font-size:10px;color:var(--text3)"> Exit costs deducted at start of ${nextM}.</span>
+      </div>`;
+    } else if(seqNext){
+      const stillNeeded = seqNext.r - newCarry;
+      carryNote = `<div style="font-size:12px;color:var(--text3);margin-top:4px">
+        ${fmt(newCarry)} carry-forward to ${nextM} — applied first, then monthly cash tops up.
+        ${fmt(stillNeeded)} more needed to exit ${seqNext.n} (highest-drain within reach).
+      </div>`;
+    } else {
+      carryNote = `<div style="font-size:12px;color:var(--text3);margin-top:4px">
+        ${fmt(newCarry)} carry-forward to ${nextM} — applied first, then monthly cash tops up.
+      </div>`;
+    }
+  }
+
+  const escBar = `
+    <div class="escape-bar">
+      <div class="ebar-label">Escape progress — loans closed out</div>
+      <div class="ebar-track"><div class="ebar-fill" style="width:${pct}%"></div></div>
+      <div class="ebar-sub">${exitedCount} of ${totalRev} exited · ${totalRev-exitedCount} remaining · monthly drain now ${fmt(totalRevDrain(p))}</div>
+      ${carryNote}
+    </div>`;
+
+  // ── Buttons ───────────────────────────────────────────────────────────────
+  const btns = document.getElementById('consequenceBtns');
+  const isLastMonth = G.currentMonth >= 6;
+
+  if(allExited){
+    btns.innerHTML = `
+      <button class="btn btn-pri btn-full" onclick="showEscapeResult()" style="background:var(--green)">🔓 Every revolving loan closed out. See what's on the other side →</button>`;
+  } else if(isLastMonth){
+    const isTrapped = p.escTier === 'trapped';
+    btns.innerHTML = isTrapped
+      ? `<button class="btn btn-pri btn-full" onclick="showEscapeResult()"
+           style="background:var(--amber)">
+           ⚠ Month 6 complete — See your restructure action plan →
+         </button>`
+      : `<button class="btn btn-pri btn-full" onclick="showEscapeResult()">
+           See Month 6 result →
+         </button>`;
+  } else {
+    btns.innerHTML = `
+      <button class="btn btn-pri" onclick="goToNextMonth()" style="flex:1">Month ${G.currentMonth+1} — keep the pressure on →</button>
+      <button class="btn btn-sec" onclick="showProfiles()">Try another profile</button>`;
+  }
+
+  // Render escape bar into its dedicated container — replaces previous month's bar
+  document.getElementById('escapeBarContainer').innerHTML = escBar;
+
+  // Hide act2ExitSection (it's on consequence screen but now unused)
+  const exitSec = document.getElementById('act2ExitSection');
+  if(exitSec) exitSec.style.display='none';
+
+  switchScreen('s-consequence');
+  updatePips();
+}
+
+// ── Exit card rendering ───────────────────────────────────────────────────────
+function renderExitCards(p, candidates) {
+  const list = document.getElementById('exitCardList');
+  if(!list) return;
+  list.innerHTML = '';
+  // Already sorted by drain DESC from exit panel — highest drain = first card = recommended
+  candidates.forEach((l, idx) => {
+    const sel = G.exitSelections.has(l.id);
+    const drain = l.p - l.r;
+    const isTop = idx === 0;
+    const badge = isTop
+      ? `<span style="font-size:9px;font-weight:700;background:var(--green-bg);color:var(--green);padding:2px 7px;border-radius:3px;margin-left:6px">Highest drain</span>`
+      : '';
+    const card = document.createElement('div');
+    card.className = `exit-card${sel?' sel':''}`;
+    card.id = `ec-${l.id}`;
+    card.onclick = () => toggleExit(l.id, p, candidates);
+    card.innerHTML = `
+      <div class="toggle-btn" style="border-color:var(--green)">${sel?'✓':''}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${l.n}${badge}</div>
+        <div style="font-size:11px;color:var(--text2)">
+          Exit cost: <strong>${fmt(effectiveP(l))}</strong> ·
+          Drain eliminated: <strong style="color:var(--green)">${fmt(drain)}/month permanently</strong>
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function renderAct2LoanList() {
+  const p = PROFILES[G.profileKey];
+  const activeLoans = getActiveLoans(p);
+  const list = document.getElementById('loanList');
+  if(!list) return;
+  list.innerHTML = '';
+  // Exclude loans currently selected for exit — they are being closed, not paid
+  activeLoans.filter(l => !G.exitSelections.has(l.id)).forEach(l => {
+    const isAdv = l.t==='adv';
+    const isRev = l.r>0;
+    const sel = G.selections.has(l.id);
+    const typeClass = isAdv?'lc-adv':isRev?'lc-rev':'lc-amort';
+    const typeLabel = isAdv?'Advance':isRev?'Revolving':'Amortised';
+    const drain = isRev ? l.p - l.r : 0;
+    const monthsLeft2 = (!isRev && !isAdv) ? effectiveMonths(l) : null;
+    const closingSoon2 = monthsLeft2 !== null && monthsLeft2 <= 6;
+    const monthTag2 = monthsLeft2
+      ? `<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:6px;${closingSoon2?'background:rgba(0,200,83,.15);color:var(--green)':'background:var(--bg3);color:var(--text3)'}">${monthsLeft2} mo left${closingSoon2?' · closes this game':''}</span>`
+      : '';
+    const due2 = effectiveP(l);
+    const unpaidBal2 = G.unpaidBalances.get(l.id) || 0;
+    const advDetail2 = unpaidBal2 > 0
+      ? `Remaining balance: ${fmt(unpaidBal2)} · One-time · Cleared permanently on full payment`
+      : `Pay ${fmt(l.p)} · One-time · Cleared permanently on payment`;
+    const amortDetail2 = unpaidBal2 > 0
+      ? `${fmt(l.p)} instalment + <strong style="color:var(--amber)">${fmt(unpaidBal2)} unpaid from previous month${G.unpaidMonths.get(l.id)>1?'s':''}</strong> = ${fmt(due2)} due`
+      : `${fmt(l.p)} · ${monthsLeft2?`${monthsLeft2} of ${l.totalMonths||'?'} months remaining`:'Fixed instalment'}`;
+    const revPenAccum2 = isRev ? (G.unpaidBalances.get(l.id) || 0) : 0;
+    const revDetail2 = revPenAccum2 > 0
+      ? `Pay ${fmt(l.p)} + <strong style="color:var(--red)">${fmt(revPenAccum2)} accumulated penalties</strong> = ${fmt(l.p + revPenAccum2)} due · Re-borrow ${fmt(l.r)}`
+      : `Pay ${fmt(l.p)} · Re-borrow ${fmt(l.r)} · Monthly drain ${fmt(drain)}`;
+    const detail = isRev ? revDetail2 : isAdv ? advDetail2 : amortDetail2;
+    const card = document.createElement('div');
+    card.className = `loan-card${sel?' selected':''}`;
+    card.id = `lc-${l.id}`;
+    card.onclick = () => toggleLoan(l.id);
+    card.innerHTML = `
+      <span class="lc-type ${typeClass}">${typeLabel}</span>
+      <div class="lc-info"><div class="lc-name">${l.n}${monthTag2}</div><div class="lc-detail">${detail}</div></div>
+      <div class="toggle-btn">${sel?'✓':''}</div>`;
+    list.appendChild(card);
+  });
+}
+
+function toggleExit(id, p, candidates) {
+  if(G.exitSelections.has(id)) G.exitSelections.delete(id);
+  else {
+    // Check we can afford this plus already selected exits
+    const totalCost = [...G.exitSelections, id]
+      .reduce((s,eid)=>{const l=p.loans.find(x=>x.id===eid);return s+(l?effectiveP(l):0);},0);
+    if(totalCost <= G.cumulativeCarry) G.exitSelections.add(id);
+    // else: silently ignore (can't afford)
+  }
+  const card = document.getElementById(`ec-${id}`);
+  if(card){
+    card.className = `exit-card${G.exitSelections.has(id)?' sel':''}`;
+    card.querySelector('.toggle-btn').textContent = G.exitSelections.has(id)?'✓':'';
+  }
+  // Update remaining carry display
+  const exitCost = [...G.exitSelections].reduce((s,eid)=>{const l=p.loans.find(x=>x.id===eid);return s+(l?effectiveP(l):0);},0);
+  const residual = G.cumulativeCarry - exitCost;
+  const remain = document.getElementById('exitCarryRemain');
+  const note = document.getElementById('exitCarryNote');
+  if(remain) remain.textContent = fmt(residual);
+  if(note){
+    if(residual > 0){
+      note.textContent = `— available for payments below`;
+      note.style.color = 'var(--text3)';
+    } else {
+      note.textContent = '— fully deployed into exit';
+      note.style.color = 'var(--green)';
+    }
+  }
+  // Update the cash display to reflect pending exit costs
+  updateCashDisplayAct2();
+  // Re-render loan list — exited loans disappear, deselected ones reappear
+  renderAct2LoanList();
+  // Also remove from G.selections if loan was ticked before exit was selected
+  if(G.exitSelections.has(id)) G.selections.delete(id);
+}
+
+// ── Apply exits and continue to next month ────────────────────────────────────
+function goToNextMonth() {
+  // Simple navigation — exits are handled at the START of the next month
+  G.currentMonth++;
+  if(G.currentMonth > 6){
+    showEscapeResult();
+  } else {
+    goToAct2Decision();
+  }
+}
+
+function applyExitsAndContinue() {
+  // Called from decision screen when player confirms exit selections
+  const p = PROFILES[G.profileKey];
+  G.exitSelections.forEach(id => {
+    const l = p.loans.find(x=>x.id===id);
+    if(l){ G.exitedLoanIds.add(id); G.cumulativeCarry -= effectiveP(l); G.totalTokens += 10; }
+  });
+  document.getElementById('tokenTotal').textContent = G.totalTokens;
+  G.exitSelections = new Set();
+  // Refresh the decision screen with exits applied (no new month — same month)
+  renderAct2Decision();
+}
+
+// ── Escape result screen ──────────────────────────────────────────────────────
+function showEscapeResult() {
+  const p = PROFILES[G.profileKey];
+  const totalRev = p.loans.filter(l=>l.r>0).length;
+  const exitedCount = [...G.exitedLoanIds].filter(id=>p.loans.find(l=>l.id===id&&l.r>0)).length;
+  const allExited = exitedCount === totalRev;
+  const tier = p.escTier;
+
+  // Amortised loan status — hoisted to function scope so all tiers can use it
+  const amortLoansAll = p.loans.filter(l=>l.t==='amort');
+  const amortWithBalance = amortLoansAll.map(l => {
+    const remMonths = effectiveMonths(l) || 0;
+    const outstanding = remMonths * l.p;
+    return { ...l, remMonths, outstanding };
+  }).filter(l => l.remMonths > 0);
+  const totalAmortMonthlyAll = amortWithBalance.reduce((s,l)=>s+l.p, 0);
+  // buildExitAdvisory — single source of truth for all exit guidance in coach.
+  // Uses sequential simulation: exits reduce carry before next is evaluated.
+  function buildExitAdvisory(carry, totalDrain) {
+    if(!revLoans.length) return '';
+    const { exitable, remainingCarry, nextTarget, remaining } = sequentialExits(carry);
+    const allActiveRev = p.loans.filter(l=>l.r>0 && !G.exitedLoanIds.has(l.id));
+
+    if(allActiveRev.length === 0) return ''; // all already exited
+
+    if(exitable.length === 0){
+      // No exits yet possible — show accumulation target
+      if(!nextTarget) return '';
+      const stillNeeded = nextTarget.r - carry;
+      const nextDrain = nextTarget.p - nextTarget.r;
+      return ` Monthly drain across all revolving loans: ${fmt(totalDrain)}.`
+           + ` Build carry-forward to ${fmt(nextTarget.r)} to permanently close out`
+           + ` ${nextTarget.n} — ${fmt(stillNeeded)} more needed.`
+           + ` That exit ends ${fmt(nextDrain)}/month in drain.`
+           + ` On the moderate scenario, ${p.name} reaches full debt freedom in ${p.esc.mod} months,`
+           + ` after which ${fmt(monthlyInvest)}/month (50% of available cash) compounds toward ${y5} by Year 5.`;
+    }
+
+    if(exitable.length === allActiveRev.length){
+      // All remaining revolving loans can be sequentially exited now
+      const totalExitCost = exitable.reduce((s,l)=>s+effectiveP(l),0);
+      const drainElim = exitable.reduce((s,l)=>s+(l.p-l.r),0);
+      return ` <strong>Exit opportunity — ${exitable.length===1?'the final revolving loan':'all '+exitable.length+' revolving loans'}.</strong>`
+           + ` Your carry-forward of ${fmt(carry)} covers them sequentially:`
+           + ` ${exitable.map(l=>`${l.n} (${fmt(effectiveP(l))})`).join(' → ')}.`
+           + ` Total exit cost: ${fmt(totalExitCost)} · ${fmt(remainingCarry)} remains.`
+           + ` Eliminates ${fmt(drainElim)}/month in drain permanently.`
+           + ` On the moderate scenario, ${p.name} reaches full debt freedom in ${p.esc.mod} months,`
+           + ` after which ${fmt(monthlyInvest)}/month (50% of available cash) compounds toward ${y5} by Year 5.`;
+    }
+
+    // Some can be exited, some cannot yet
+    const firstExit = exitable[0];
+    const firstDrain = firstExit.p - firstExit.r;
+    // Is firstExit the globally highest-drain loan, or just the highest within reach?
+    const highestDrainOverall = [...exitable, ...remaining].sort((a,b)=>(b.p-b.r)-(a.p-a.r))[0];
+    const firstIsGlobalBest = highestDrainOverall.id === firstExit.id;
+    const reachLabel = firstIsGlobalBest
+      ? `highest drain first`
+      : `highest drain within reach of your carry-forward`;
+    let msg = ` <strong>Exit available:</strong> Your carry-forward of ${fmt(carry)} covers`
+            + ` ${exitable.length === 1 ? firstExit.n : exitable.map(l=>l.n).join(' then ')}`
+            + ` (${reachLabel}).`
+            + ` Exit cost ${fmt(firstExit.r)}, ends ${fmt(firstDrain)}/month in drain permanently.`
+            + ` ${fmt(remainingCarry)} carry remains after.`;
+    if(!firstIsGlobalBest){
+      // Explain why the higher-drain loan isn't being exited yet
+      const higherDrain = highestDrainOverall.p - highestDrainOverall.r;
+      const stillNeededForBest = effectiveP(highestDrainOverall) - remainingCarry;
+      msg += ` <em>${highestDrainOverall.n} has a higher drain (${fmt(higherDrain)}/month)`
+           + ` but needs ${fmt(effectiveP(highestDrainOverall))} to exit — ${fmt(stillNeededForBest)} more to reach it.</em>`;
+    } else if(nextTarget){
+      const stillNeeded = nextTarget.r - remainingCarry;
+      const nextDrain = nextTarget.p - nextTarget.r;
+      msg += ` Next: ${fmt(stillNeeded)} more carry to exit ${nextTarget.n}`
+           + ` (${fmt(nextDrain)}/month drain).`;
+    }
+    msg += ` On the moderate scenario, ${p.name} reaches full debt freedom in ${p.esc.mod} months,`
+         + ` after which ${fmt(monthlyInvest)}/month (50% of available cash) compounds toward ${y5} by Year 5.`;
+    return msg;
+  }
+
+  const monthlyInvest = Math.round(p.cash * 0.5); // 50% of available cash → investment
+  const y5 = fmt(Math.round(monthlyInvest*1.01*((Math.pow(1.01,60)-1)/0.01)));
+  const topupMonthly = p.topupP > 0 ? Math.round(p.topupP*(0.14/12)/(1-Math.pow(1+0.14/12,-36))) : 0;
+
+  let badge='', headerHTML='', bodyHTML='', btnsHTML='';
+
+  if(allExited){
+    // Act 3 unlock
+    badge = {cls:"perf-badge tier-act3", text:"🔓 Act 3 Unlocked — The debt is gone. Now what?"};
+    headerHTML = `
+      <div class="rh-tokens" style="color:var(--green)">${G.totalTokens}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;color:var(--text2)">Total tokens earned</div>
+        <div style="font-size:12px;color:var(--green);margin-top:4px">All ${totalRev} revolving loans permanently closed — Month ${G.currentMonth}</div>
+      </div>`;
+    const amortLoans = amortLoansAll;
+    const totalOrigDrain = p.loans.filter(l=>l.r>0).reduce((s,l)=>s+(l.p-l.r),0);
+
+    const totalOutstanding = amortWithBalance.reduce((s,l)=>s+l.outstanding, 0);
+    const carry = G.cumulativeCarry;
+    const totalMonthlyAmort = amortWithBalance.reduce((s,l)=>s+l.p, 0);
+
+    // Impact-driven allocation — sorted by remaining months ASC (closest to completion first).
+    // Only allocate to a loan if carry covers at least 1 full instalment of that loan.
+    // A KSh 64 allocation toward a KSh 32,000 mortgage instalment is financially meaningless.
+    // Snowball logic: fully clear the shortest loans first, then spill to the next.
+    const amortSorted = [...amortWithBalance].sort((a,b)=>a.remMonths-b.remMonths);
+    const smartAlloc = [];
+    let allocRemain = carry;
+    for(const l of amortSorted){
+      if(allocRemain < l.p){
+        // Less than one full instalment — skip, allocation is insignificant
+        smartAlloc.push({...l, allocAmt:0, allocType:'skip',
+          monthsAfter:l.remMonths});
+      } else if(allocRemain >= l.outstanding){
+        // Can fully clear this loan
+        allocRemain -= l.outstanding;
+        smartAlloc.push({...l, allocAmt:l.outstanding, allocType:'full',
+          monthsAfter:0});
+      } else {
+        // Meaningful partial: covers at least 1 instalment
+        const instalmentsCovered = Math.floor(allocRemain / l.p);
+        const amtUsed = instalmentsCovered * l.p;
+        allocRemain -= amtUsed;
+        smartAlloc.push({...l, allocAmt:amtUsed, allocType:'partial',
+          instalmentsCovered, monthsAfter:l.remMonths - instalmentsCovered});
+      }
+    }
+    const canClearAll = carry >= totalOutstanding;
+    const option1Surplus = canClearAll ? carry - totalOutstanding : allocRemain;
+    const anyMeaningful = smartAlloc.some(l=>l.allocType!=='skip');
+
+    // Build amortised section
+    const amortSection = amortWithBalance.length > 0 ? `
+      <div style="margin-top:14px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r)">
+        <div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+          Amortised loans — ${amortWithBalance.length} still running
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.9;margin-bottom:12px">
+          ${amortSorted.map(l=>`
+            <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+              <strong style="color:var(--text)">${l.n}</strong> &nbsp;·&nbsp;
+              ${fmt(l.p)}/month &nbsp;·&nbsp;
+              <strong style="color:var(--purple)">${l.remMonths} instalment${l.remMonths===1?'':'s'} remaining</strong> &nbsp;·&nbsp;
+              outstanding: <strong>${fmt(l.outstanding)}</strong>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8">
+          <strong style="color:var(--text)">Your carry-forward: ${fmt(carry)}</strong> &nbsp;·&nbsp;
+          Total outstanding: <strong>${fmt(totalOutstanding)}</strong>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:12px 14px;background:linear-gradient(135deg,rgba(0,200,83,.06),rgba(41,121,255,.06));border:1px solid rgba(0,200,83,.2);border-radius:var(--r)">
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px">Choose your Act 3 starting position</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
+          <div style="padding:10px 12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2)">
+            <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px">Option 1 — Accelerate paydown</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.7">
+              ${canClearAll
+                ? `Clear all amortised loans now — total ${fmt(totalOutstanding)}.
+                   <strong style="color:var(--green)">${fmt(option1Surplus)}</strong> is your Act 3 seed. Then: <strong>${fmt(Math.round(p.cash*0.5))}/month invested</strong> (50%) + <strong>${fmt(Math.round(p.cash*0.5))}/month saved</strong> (50%).`
+                : anyMeaningful
+                  ? `Target shortest loans first:
+                     ${smartAlloc.filter(l=>l.allocType!=='skip').map(l=>
+                       l.allocType==='full'
+                         ? `<strong>${l.n}</strong>: fully cleared (${fmt(l.allocAmt)})`
+                         : `<strong>${l.n}</strong>: ${l.instalmentsCovered} instalment${l.instalmentsCovered===1?'':'s'} cleared, ${l.monthsAfter} remaining`
+                     ).join(' · ')}.
+                     ${smartAlloc.some(l=>l.allocType==='skip') ? `<em>${smartAlloc.filter(l=>l.allocType==='skip').map(l=>l.n).join(', ')} — carry insufficient for even 1 instalment, continue on schedule.</em>` : ''}
+                     ${option1Surplus > 0 ? fmt(option1Surplus)+' carry surplus.' : ''}`
+                  : (() => {
+                      const shortestLoan = amortSorted[0];
+                      const shortfall = shortestLoan.p - carry;
+                      return `Your carry-forward of ${fmt(carry)} is ${fmt(shortfall)} short of one instalment
+                      on ${shortestLoan.n} (${fmt(shortestLoan.p)}/month, ${shortestLoan.remMonths} remaining).
+                      Allocating here would have negligible impact.
+                      <strong>Option 2 is the stronger move</strong> — your ${fmt(carry)} compounds faster as an investment seed
+                      than it reduces a ${fmt(shortestLoan.outstanding)} outstanding balance by a fraction.`;
+                    })()}
+            </div>
+          </div>
+          <div style="padding:10px 12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2)">
+            <div style="font-size:11px;font-weight:700;color:var(--blue2);margin-bottom:4px">Option 2 — Invest now</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.7">
+              Seed: <strong style="color:var(--blue2)">${fmt(carry)}</strong> into Act 3.<br>
+              ${totalMonthlyAmort > 0 ? `
+                Monthly cash: <strong>${fmt(p.cash)}</strong><br>
+                Less amortised loans: <strong style="color:var(--purple)">− ${fmt(totalMonthlyAmort)}</strong>
+                  (${amortWithBalance.map(l=>l.n).join(', ')})<br>
+                Cash available for 50/50: <strong>${fmt(Math.max(0,p.cash-totalMonthlyAmort))}</strong><br>
+                → <strong style="color:var(--blue2)">${fmt(Math.round(Math.max(0,p.cash-totalMonthlyAmort)*0.5))}/month invested</strong>
+                + <strong style="color:var(--amber)">${fmt(Math.round(Math.max(0,p.cash-totalMonthlyAmort)*0.5))}/month saved</strong>
+                ${Math.max(0,p.cash-totalMonthlyAmort)===0 ? '<br><em style="color:var(--text3)">No monthly surplus after amortised — seed compounds without top-up until loans clear.</em>' : ''}
+              ` : `
+                <strong style="color:var(--blue2)">${fmt(Math.round(p.cash*0.5))}/month invested</strong> +
+                <strong style="color:var(--amber)">${fmt(Math.round(p.cash*0.5))}/month saved</strong> (50/50 of full available cash).
+              `}
+            </div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px">The choice is yours — both paths lead to Act 3. Act 3 will let you model both scenarios.</div>
+      </div>` : '';
+    // Build a profile-specific compound interest / amortisation insight
+    const hasLongAmort = amortWithBalance.some(l=>l.remMonths > 12);
+    const hasMortgage  = amortWithBalance.some(l=>l.n.toLowerCase().includes('mortgage'));
+    const totalAmortMonthly = amortWithBalance.reduce((s,l)=>s+l.p, 0);
+    const revolveWasCosting = totalOrigDrain; // monthly drain that is now gone
+
+    // Core insight: revolving interest worked AGAINST — now compound interest works FOR
+    // Amortised loans reduce principal each month — they were always on your side
+    const compoundLesson = hasMortgage
+      ? `Every mortgage payment ${p.name} makes reduces the principal — the bank's share of the property shrinks, and ${p.name}'s grows. That is amortisation working for you.`
+      : amortWithBalance.length > 0
+        ? `Every amortised loan instalment reduces the outstanding balance — unlike revolving debt, where the principal never moved no matter how much was paid.`
+        : ``;
+
+    const opt2AmortMo = amortWithBalance.reduce((s,l)=>s+l.p,0);
+    const opt2InvestMo = Math.round(Math.max(0, p.cash - opt2AmortMo) * 0.5);
+    const sameAmount = monthlyInvest === opt2InvestMo;
+
+    const flipNarrative = `
+      <div style="margin:12px 0;padding:12px 14px;background:rgba(0,200,83,.06);border-left:3px solid var(--green);border-radius:0 var(--r2) var(--r2) 0">
+        <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">The flip — from paying interest to earning it</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8">
+          Revolving debt was compound interest working <strong>against</strong> ${p.name}:
+          ${fmt(revolveWasCosting)}/month drained away, and the principal never reduced.
+          Every missed payment compounded the cost. Every cycle reset to zero.
+          <br><br>
+          That stops now. The same compounding mechanism — money growing on itself — is about to
+          work <strong>in ${p.name}'s favour</strong>.
+          <br><br>
+          ${sameAmount
+            ? `Monthly investment: <strong style="color:var(--blue2)">${fmt(monthlyInvest)}/month</strong>
+               (50% of available cash — same under both options since amortised obligations are minimal).`
+            : `Monthly investment depends on your choice:
+               <strong style="color:var(--green)">${fmt(monthlyInvest)}/month</strong> under Option 1
+               (50% of available cash, after amortised obligations are accelerated) —
+               or <strong style="color:var(--blue2)">${fmt(opt2InvestMo)}/month</strong> under Option 2
+               (50% of the KSh ${fmt(Math.max(0,p.cash-opt2AmortMo))} remaining after amortised obligations of
+               ${fmt(opt2AmortMo)}/month).`}
+          <br>
+          Either amount does not grow linearly — it compounds. Each month's return earns return the next month.
+          Act 3 shows the exact Year 5 projection for your chosen allocation.
+          ${compoundLesson ? `<br><br>${compoundLesson}` : ''}
+          <br><br>
+          <em>Act 3 is where you choose how to deploy both forces at once —
+          amortisation reducing what you owe, compound interest building what you own.</em>
+        </div>
+      </div>`;
+
+    bodyHTML = `
+      <div class="coach-panel">
+        <div class="coach-title">The drain is gone. Now the forces flip.</div>
+        <div class="coach-body">
+          ${fmt(revolveWasCosting)}/month was disappearing into revolving interest.
+          Now it isn't. That number — every month — is now ${p.name}'s to direct.
+          <br><br>
+          Carry-forward of <strong style="color:var(--green)">${fmt(G.cumulativeCarry)}</strong> is the investment seed.
+          <br><br>
+          ${amortWithBalance.length === 0
+            ? `<strong style="color:var(--green)">Option available</strong>
+               (amortised loans fully cleared).
+               Add carry-forward to available cash next month as the seed investment.
+               Thereafter, <strong style="color:var(--blue2)">${fmt(monthlyInvest)}/month invested</strong>
+               + <strong style="color:var(--amber)">${fmt(monthlyInvest)}/month saved</strong> — 50/50 of available cash.`
+            : `<strong style="color:var(--blue2)">Option 1</strong>
+               — Choose to apply carry-forward to pay down and reduce amortised loans next month
+               (${amortWithBalance.map(l=>l.n).join(', ')}).
+               This shortens your remaining amortised term before investing.
+               <br><br>
+               <strong style="color:var(--green)">Option 2</strong>
+               — Choose to add carry-forward to available cash next month as the seed investment.
+               Thereafter: <strong style="color:var(--blue2)">${fmt(Math.round(Math.max(0,p.cash-totalAmortMonthly)*0.5))}/month invested</strong>
+               + <strong style="color:var(--amber)">${fmt(Math.round(Math.max(0,p.cash-totalAmortMonthly)*0.5))}/month saved</strong>
+               (50/50 of ${fmt(Math.max(0,p.cash-totalAmortMonthly))} after amortised obligations of ${fmt(totalAmortMonthly)}/month).
+               ${Math.max(0,p.cash-totalAmortMonthly) === 0
+                 ? `<br><em style="color:var(--text3)">No monthly surplus after amortised — seed compounds without monthly top-up until loans clear.</em>`
+                 : ''}`}
+        </div>
+      </div>
+      ${flipNarrative}
+      ${amortSection}`;
+    // Compute seed for each option to pass into enterAct3()
+    const opt1Seed = canClearAll ? option1Surplus : allocRemain;
+    const opt2Seed = carry;
+
+    // Option 1: compute REMAINING amortised monthly after smartAlloc clears/reduces some loans
+    // Loans fully cleared by smartAlloc contribute 0 to remaining monthly
+    // Loans partially cleared still have their full monthly instalment
+    // Loans skipped (carry insufficient) are unchanged
+    const opt1RemainingAmortMo = canClearAll ? 0 : amortWithBalance.reduce((s,l) => {
+      const alloc = smartAlloc.find(a => a.id === l.id);
+      return s + (alloc && alloc.allocType === 'full' ? 0 : l.p);
+    }, 0);
+    const opt1Remainder = Math.max(0, p.cash - opt1RemainingAmortMo);
+    const opt1Mo = Math.round(opt1Remainder * 0.5);
+
+    // Option 2: full amortised monthly still running, 50/50 on remainder
+    const opt2Remainder = Math.max(0, p.cash - totalAmortMonthly);
+    const opt2Mo = Math.round(opt2Remainder * 0.5);
+
+    // Pre-compute remaining amort loan details for Option 1 — stored in G for act3 tracker
+    G.act3RemainingAmort = canClearAll ? [] : amortWithBalance.map(l => {
+      const alloc = smartAlloc.find(a => a.id === l.id);
+      const fullyCleared = alloc && alloc.allocType === 'full';
+      const instalmentsCovered = (alloc && alloc.allocType === 'partial') ? alloc.instalmentsCovered : 0;
+      return fullyCleared ? null : {
+        id: l.id, n: l.n, p: l.p,
+        remMonths: l.remMonths - instalmentsCovered,
+        outstanding: l.outstanding - instalmentsCovered * l.p
+      };
+    }).filter(Boolean);
+
+    btnsHTML = amortWithBalance.length > 0 ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <button class="btn btn-pri" style="background:var(--green)"
+          onclick="enterAct3(1, ${opt1Seed}, ${opt1Mo}, ${opt1RemainingAmortMo})">
+          Option 1 — Accelerate paydown first →
+        </button>
+        <button class="btn btn-pri" style="background:var(--blue)"
+          onclick="enterAct3(2, ${opt2Seed}, ${opt2Mo}, ${totalAmortMonthly})">
+          Option 2 — Invest now →
+        </button>
+      </div>
+      <button class="btn btn-sec btn-full" onclick="showProfiles()">Try another profile</button>` :
+    `<button class="btn btn-pri btn-full" style="background:var(--green);margin-bottom:10px"
+        onclick="enterAct3(2, ${opt2Seed}, ${opt2Mo}, 0)">
+        Enter Act 3 — watch the money work →
+      </button>
+      <button class="btn btn-sec btn-full" onclick="showProfiles()">Try another profile</button>`;
+
+  } else if(tier==='extended'){
+    // Extended timeline — not escaped by M6 but will escape
+    badge = {cls:"perf-badge tier-extended", text:`📈 On Track — The escape takes ${p.escMonth} months, not 6`};
+    headerHTML = `
+      <div class="rh-tokens" style="color:var(--blue2)">${exitedCount}/${totalRev}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;color:var(--text2)">Revolving loans exited of ${totalRev}</div>
+        <div style="font-size:12px;color:var(--blue2);margin-top:4px">Full escape projected: Month ${p.escMonth}</div>
+      </div>`;
+    bodyHTML = `
+      <div class="coach-panel">
+        <div class="coach-title">The exit is real — it just takes ${p.escMonth} months</div>
+        <div class="coach-body">
+          ${p.name}'s revolving drain of ${fmt(p.loans.filter(l=>l.r>0).reduce((s,l)=>s+(l.p-l.r),0))}/month is real but manageable.
+          The carry-forward grows — just slowly, because the drain consumes most of the surplus each cycle.
+          The snowball is smaller here. It still rolls.
+          <br><br>
+          The single discipline that keeps this on track: <strong>no new revolving credit.</strong>
+          One new loan resets the accumulation clock and the escape timeline stretches visibly further out.
+          <br><br>
+          At Month ${p.escMonth}, the revolving trap is gone. ${amortWithBalance.length > 0
+            ? `Amortised loans${amortWithBalance.length > 0 ? ' ('+amortWithBalance.map(l=>l.n).join(', ')+')' : ''} will still be running —
+               they are asset-building obligations that continue within ${p.name}'s cash envelope.
+               <br><br>
+               <strong>Option 1</strong> — use carry-forward to accelerate paydown of amortised loans,
+               then invest 50% of available cash: <strong style="color:var(--blue2)">${fmt(Math.round(p.cash*0.5))}/month</strong>.
+               <br>
+               <strong>Option 2</strong> — invest the carry-forward now as a seed.
+               After amortised obligations (${fmt(amortWithBalance.reduce((s,l)=>s+l.p,0))}/month),
+               invest 50% of remainder: <strong style="color:var(--blue2)">${fmt(Math.round(Math.max(0,p.cash-amortWithBalance.reduce((s,l)=>s+l.p,0))*0.5))}/month</strong>.
+               <br><br>
+               Either path leads to Act 3 — the destination is the same.`
+            : `With no remaining amortised obligations, the full 50/50 split applies immediately:
+               <strong style="color:var(--blue2)">${fmt(monthlyInvest)}/month invested</strong> +
+               <strong style="color:var(--amber)">${fmt(monthlyInvest)}/month saved</strong>,
+               compounding toward <strong>${y5} by Year 5</strong>.`}
+        </div>
+      </div>`;
+    btnsHTML = `<button class="btn btn-pri btn-full" style="margin-bottom:10px;opacity:0.7" onclick="alert('Act 3 — coming soon. The destination is the same.')">Preview Act 3 →</button>
+      <button class="btn btn-sec btn-full" onclick="showProfiles()">Try another profile</button>`;
+
+  } else {
+    // Structurally trapped — top-up route
+    badge = {cls:"perf-badge tier-trapped", text:"⚠ The trap is structural — but there is a way out"};
+    headerHTML = `
+      <div class="rh-tokens" style="color:var(--amber)">${exitedCount}/${totalRev}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;color:var(--text2)">Revolving loans exited of ${totalRev}</div>
+        <div style="font-size:12px;color:var(--amber);margin-top:4px">Cannot escape without structural change</div>
+      </div>`;
+    // Compute action plan numbers for this trapped profile
+    const revLoansTrapped  = p.loans.filter(l=>l.r>0);
+    const amortLoansTrapped = p.loans.filter(l=>l.t==='amort');
+    const revDrainTotal    = revLoansTrapped.reduce((s,l)=>s+(l.p-l.r),0);
+    const revPrincipalTotal = revLoansTrapped.reduce((s,l)=>s+l.r,0); // re-borrow principal (for restructure calculation)
+    const amortMonthlyTotal = amortLoansTrapped.reduce((s,l)=>s+l.p,0);
+    const hasAmortised      = amortLoansTrapped.length > 0;
+    const r14               = 0.14/12;
+    // New top-up instalment replaces revolving cycling
+    const newTopupMonthly   = topupMonthly; // already computed: p.topupP at 14% 36mo
+    // Cashflow after restructure
+    const afterRestructure  = Math.max(0, p.cash - amortMonthlyTotal - newTopupMonthly);
+    const investAfter       = Math.round(afterRestructure * 0.5);
+
+    const restructureRoute = hasAmortised
+      ? `<strong>Route 1 — Restructure your existing amortised loan${amortLoansTrapped.length>1?'s':''}.</strong>
+         Approach your lender to extend the repayment term — this reduces the monthly instalment
+         and frees cash to service a consolidation product for the revolving loans.`
+      : `<strong>Route 1 — Source a new amortised loan.</strong>
+         ${p.name} does not currently hold an amortised product.
+         A new structured loan (SACCO, KWFT, payroll advance, or bank personal loan)
+         at the lowest available rate and longest feasible term creates the repayment vehicle needed.`;
+
+    bodyHTML = `
+      <div class="coach-panel">
+        <div class="coach-title">Month 6 — Game over. Here is the action plan.</div>
+        <div class="coach-body">
+          <strong>The game ends here for ${p.name}.</strong> This profile cannot exit revolving loans
+          through sequencing alone — monthly obligations exceed available cash.
+          The revolving cycle repeats indefinitely unless the structure changes first.
+          <br><br>
+          This is not a failure of play. It is a diagnosis.
+          The structure is the problem — and the structure can be changed.
+        </div>
+      </div>
+
+      <div style="margin:14px 0;padding:14px 16px;background:var(--bg3);border:1px solid var(--amber);border-radius:var(--r)">
+        <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+          Why the trap persists — the numbers
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.9">
+          Available cash: <strong>${fmt(p.cash)}</strong>/month<br>
+          Amortised loan obligations: <strong style="color:var(--purple)">${fmt(amortMonthlyTotal)}</strong>/month
+          ${hasAmortised ? '('+amortLoansTrapped.map(l=>l.n).join(', ')+')' : '(none)'}<br>
+          Revolving drain: <strong style="color:var(--red)">${fmt(revDrainTotal)}</strong>/month
+          — ${revLoansTrapped.length} loan${revLoansTrapped.length>1?'s':''}, principal never reduces<br>
+          Revolving principal to consolidate: <strong>${fmt(p.topupP)}</strong>
+        </div>
+      </div>
+
+      <div style="margin:14px 0;padding:14px 16px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r)">
+        <div style="font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+          The restructure action plan
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.9">
+          <strong style="color:var(--green)">Step 1 — Restructure or source an amortised product.</strong><br>
+          ${restructureRoute}
+          <br><br>
+          <strong style="color:var(--green)">Step 2 — Consolidate revolving principal into the structured product.</strong><br>
+          Use part of the top-up or restructured loan to pay off all revolving principals
+          (${fmt(p.topupP)}) without re-borrowing.
+          Every revolving loan closed out permanently eliminates its monthly drain.
+          <br><br>
+          <strong style="color:var(--green)">Step 3 — Service the consolidated product monthly.</strong><br>
+          At 14% p.a. over 36 months, the consolidated repayment is
+          <strong style="color:var(--amber)">${fmt(newTopupMonthly)}/month</strong>
+          — replacing <strong>${fmt(revDrainTotal)}/month</strong> in revolving drain
+          and <strong>actually reducing the balance</strong> every month.
+          <br><br>
+          ${afterRestructure > 0
+            ? `<strong style="color:var(--blue2)">Step 4 — Begin the 50/50 split.</strong><br>
+               After amortised (${fmt(amortMonthlyTotal)}) + top-up (${fmt(newTopupMonthly)}):
+               <strong>${fmt(afterRestructure)}</strong>/month remains.
+               → <strong style="color:var(--blue2)">${fmt(investAfter)}/month invested</strong>
+               + <strong style="color:var(--amber)">${fmt(investAfter)}/month saved</strong>.`
+            : `<strong style="color:var(--text3)">Step 4 — When loans clear.</strong><br>
+               Once the consolidation product is fully repaid, the freed cash
+               moves immediately into the 50/50 investment and savings split.`}
+          <br><br>
+          <em style="color:var(--text3)">Approach: SACCO, KWFT, or payroll lender first.
+          Avoid high-rate digital lenders for consolidation.
+          Present this plan proactively — lenders respond better to structured proposals than to missed payments.</em>
+        </div>
+      </div>`;
+
+    btnsHTML = `
+      <button class="btn btn-sec btn-full" onclick="showProfiles()">Try a different profile</button>`;
+  }
+
+  const escBadgeEl = document.getElementById('escape-badge');
+  escBadgeEl.className = badge.cls;
+  escBadgeEl.textContent = badge.text;
+  document.getElementById('escape-header').innerHTML = headerHTML;
+  document.getElementById('escape-body').innerHTML = bodyHTML;
+  document.getElementById('escape-btns').innerHTML = btnsHTML;
+
+  switchScreen('s-escape-result');
+  updatePips();
+}
+
+// ── Act 3 — Build Wealth ─────────────────────────────────────────────────────
+
+const ACT3_PRODUCTS = {
+  tbill:  { name:'T-Bills',        rate:15.0, risk:'Low',    riskCls:'a3-risk-low',
+            meta:'CBK 91-day weighted average · ~15% p.a.', liquidity:'Liquid monthly' },
+  mmf:    { name:'Money Market',   rate:12.0, risk:'Low',    riskCls:'a3-risk-low',
+            meta:'CMA-regulated funds: CIC, Sanlam, ICEA Lion · ~12% p.a. avg', liquidity:'T+1 to T+3 liquid' },
+  sacco:  { name:'SACCO Shares',   rate:10.5, risk:'Medium', riskCls:'a3-risk-med',
+            meta:'SASRA Supervisory Report 2024: sector avg 10.46% · annual dividend', liquidity:'Annual — illiquid until AGM' },
+  equity: { name:'NSE Equity',     rate:10.0, risk:'High',   riskCls:'a3-risk-hi',
+            meta:'NSE long-run avg · returns vary widely year to year (+40% to −30%)', liquidity:'Liquid, highly variable' },
+};
+
+const ACT3_COLORS = {
+  tbill:'#00c853', mmf:'#2979ff', sacco:'#aa00ff', equity:'#ff6d00'
+};
+
+let act3ChartInstance = null;
+
+function enterAct3(option, seed, monthlyContrib, amortMo) {
+  const p = PROFILES[G.profileKey];
+  G.act3Option       = option;
+  G.act3Seed         = seed;
+  G.act3MonthlyContrib = monthlyContrib;
+  G.act3AmortMo      = amortMo;
+  G.act3Chosen       = new Set();
+  G.act3Allocs       = { tbill:0, mmf:0, sacco:0, equity:0 };
+  G.act = 3;
+
+  // Render profile pill
+  document.getElementById('act3Pill').innerHTML = `
+    <div class="pill-avatar">${p.name.slice(0,2).toUpperCase()}</div>
+    <div>
+      <div class="pill-name">${p.name} — Act 3 · Build Wealth</div>
+      <div class="pill-sub">${p.city} · ${p.role}</div>
+    </div>
+    <div class="sev ${SEV_CLASS[p.sev]}" style="margin-left:auto">${SEV_LABEL[p.sev]}</div>`;
+
+  // Render option banner
+  const optColor = option === 1 ? 'var(--green)' : 'var(--blue2)';
+  const optLabel = option === 1 ? 'Option 1 — Accelerate paydown' : 'Option 2 — Invest now';
+  // Build transparent cash breakdown line
+  const bannerBreakdown = option === 2 && amortMo > 0
+    ? `<div style="margin-top:6px;font-size:11px;color:var(--text2);line-height:1.9;padding:8px 12px;background:var(--bg2);border-radius:var(--r2)">
+        <div>Available cash: <strong style="color:var(--text);font-family:var(--mono)">${fmt(p.cash)}</strong></div>
+        <div>Less amortised loans: <strong style="color:var(--purple);font-family:var(--mono)">− ${fmt(amortMo)}</strong></div>
+        <div style="border-top:1px solid var(--border);margin:4px 0;padding-top:4px">
+          Cash for 50/50 split: <strong style="color:var(--text);font-family:var(--mono)">${fmt(Math.max(0,p.cash-amortMo))}</strong>
+        </div>
+        ${monthlyContrib > 0
+          ? `<div><strong style="color:var(--blue2)">${fmt(monthlyContrib)}/month invested</strong> + <strong style="color:var(--amber)">${fmt(monthlyContrib)}/month saved</strong></div>`
+          : `<div style="color:var(--text3)"><em>No monthly surplus after amortised — seed compounds without monthly top-up until loans clear.</em></div>`}
+      </div>`
+    : `<div style="margin-top:6px;font-size:11px;color:var(--text2);line-height:1.9;padding:8px 12px;background:var(--bg2);border-radius:var(--r2)">
+        <div>Available cash: <strong style="color:var(--text);font-family:var(--mono)">${fmt(p.cash)}</strong> (before deduction of amortised obligations)</div>
+        <div><strong style="color:var(--blue2)">${fmt(monthlyContrib)}/month invested</strong> + <strong style="color:var(--amber)">${fmt(monthlyContrib)}/month saved</strong></div>
+      </div>`;
+  document.getElementById('act3OptionBanner').innerHTML = `
+    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;">
+      <div style="font-size:11px;font-weight:700;color:${optColor};text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${optLabel}</div>
+      <div style="font-size:12px;color:var(--text2)">
+        Investment seed: <strong style="color:var(--green);font-family:var(--mono)">${fmt(seed)}</strong>
+      </div>
+      ${bannerBreakdown}
+    </div>`;
+
+  // Show step 1
+  document.getElementById('act3Step1').style.display = '';
+  document.getElementById('act3Step2').style.display = 'none';
+  document.getElementById('act3Step3').style.display = 'none';
+  act3RenderProducts();
+
+  switchScreen('s-act3');
+  updatePips();
+}
+
+function act3RenderProducts() {
+  const grid = document.getElementById('act3ProductGrid');
+  grid.innerHTML = '';
+  Object.entries(ACT3_PRODUCTS).forEach(([key, prod]) => {
+    const sel = G.act3Chosen.has(key);
+    const div = document.createElement('div');
+    div.className = 'a3-product' + (sel ? ' sel' : '');
+    div.onclick = () => act3ToggleProduct(key);
+    const equityNote = key === 'equity'
+      ? `<div style="font-size:9px;color:var(--red);margin-top:4px;line-height:1.4">
+           ⚠ Returns vary sharply year to year. NSE20 fell ~73% from 2015 peak to 2023 low.
+           The rate shown is a long-run average — not a guaranteed annual return.
+         </div>`
+      : '';
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="a3-prod-name">${prod.name}</div>
+        <div style="width:18px;height:18px;border-radius:4px;border:1.5px solid ${sel?'var(--green)':'var(--border2)'};
+             background:${sel?'var(--green)':'transparent'};display:flex;align-items:center;justify-content:center;
+             font-size:11px;color:#fff;flex-shrink:0">${sel?'✓':''}</div>
+      </div>
+      <div class="a3-prod-rate">${prod.rate}% <span style="font-size:11px;font-weight:400;color:var(--text3)">p.a.</span></div>
+      <div class="a3-prod-meta">${prod.meta}</div>
+      <div class="a3-prod-risk ${prod.riskCls}">${prod.risk} risk · ${prod.liquidity}</div>
+      ${equityNote}`;
+    grid.appendChild(div);
+  });
+}
+
+function act3ToggleProduct(key) {
+  if(G.act3Chosen.has(key)){
+    G.act3Chosen.delete(key);
+  } else {
+    if(G.act3Chosen.size >= 3){
+      document.getElementById('act3Step1Error').textContent = 'Maximum 3 products. Deselect one first.';
+      document.getElementById('act3Step1Error').style.display = '';
+      return;
+    }
+    G.act3Chosen.add(key);
+  }
+  document.getElementById('act3Step1Error').style.display = 'none';
+  act3RenderProducts();
+}
+
+function act3GoToStep2() {
+  if(G.act3Chosen.size < 2){
+    document.getElementById('act3Step1Error').textContent = 'Please select at least 2 products.';
+    document.getElementById('act3Step1Error').style.display = '';
+    return;
+  }
+  // Distribute evenly as starting point
+  const each = Math.floor(100 / G.act3Chosen.size);
+  const keys = [...G.act3Chosen];
+  keys.forEach((k,i) => { G.act3Allocs[k] = i === keys.length-1 ? 100 - each*(keys.length-1) : each; });
+  Object.keys(ACT3_PRODUCTS).forEach(k => { if(!G.act3Chosen.has(k)) G.act3Allocs[k] = 0; });
+
+  document.getElementById('act3Step1').style.display = 'none';
+  document.getElementById('act3Step2').style.display = '';
+  act3RenderAllocs();
+}
+
+function act3RenderAllocs() {
+  const panel = document.getElementById('act3AllocPanel');
+  panel.innerHTML = '';
+  let total = 0;
+  [...G.act3Chosen].forEach(key => {
+    const prod = ACT3_PRODUCTS[key];
+    const pct  = G.act3Allocs[key] || 0;
+    total += pct;
+    const row = document.createElement('div');
+    row.className = 'a3-alloc-row';
+    row.innerHTML = `
+      <div class="a3-alloc-name">
+        <div style="color:${ACT3_COLORS[key]};font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">${prod.name}</div>
+        <div style="font-size:10px;color:var(--text3)">${prod.rate}% p.a.</div>
+      </div>
+      <div class="a3-alloc-ctrl">
+        <button class="a3-alloc-btn" onclick="act3AdjAlloc('${key}',-5)">−</button>
+        <div class="a3-alloc-val" id="alloc-${key}">${pct}%</div>
+        <button class="a3-alloc-btn" onclick="act3AdjAlloc('${key}',+5)">+</button>
+      </div>`;
+    panel.appendChild(row);
+  });
+  const totalEl = document.getElementById('act3AllocTotal');
+  totalEl.textContent = total + '%';
+  totalEl.style.color = total === 100 ? 'var(--green)' : total > 100 ? 'var(--red)' : 'var(--amber)';
+}
+
+function act3AdjAlloc(key, delta) {
+  const cur = G.act3Allocs[key] || 0;
+  const newVal = Math.max(0, Math.min(100, cur + delta));
+  G.act3Allocs[key] = newVal;
+  document.getElementById('alloc-' + key).textContent = newVal + '%';
+  const total = [...G.act3Chosen].reduce((s,k) => s + (G.act3Allocs[k]||0), 0);
+  const totalEl = document.getElementById('act3AllocTotal');
+  totalEl.textContent = total + '%';
+  totalEl.style.color = total === 100 ? 'var(--green)' : total > 100 ? 'var(--red)' : 'var(--amber)';
+  document.getElementById('act3Step2Error').style.display = 'none';
+}
+
+function act3BackToStep1() {
+  document.getElementById('act3Step2').style.display = 'none';
+  document.getElementById('act3Step1').style.display = '';
+}
+
+function act3BackToStep2() {
+  document.getElementById('act3Step3').style.display = 'none';
+  document.getElementById('act3Step2').style.display = '';
+  act3RenderAllocs();
+}
+
+function act3RunProjection() {
+  const total = [...G.act3Chosen].reduce((s,k) => s + (G.act3Allocs[k]||0), 0);
+  if(total !== 100){
+    document.getElementById('act3Step2Error').textContent = 'Allocations must sum to exactly 100%. Currently at ' + total + '%.';
+    document.getElementById('act3Step2Error').style.display = '';
+    return;
+  }
+  document.getElementById('act3Step2').style.display = 'none';
+  document.getElementById('act3Step3').style.display = '';
+  act3BuildProjection();
+}
+
+function act3BuildProjection() {
+  const p = PROFILES[G.profileKey];
+  const MONTHS = 60;
+  const seed   = G.act3Seed;
+  const contribPerMonth = G.act3MonthlyContrib;
+
+  // Per-product monthly rate
+  const rates = {};
+  [...G.act3Chosen].forEach(k => { rates[k] = ACT3_PRODUCTS[k].rate / 100 / 12; });
+
+  // Weighted blended rate
+  const blendedRate = [...G.act3Chosen].reduce((s,k) =>
+    s + (G.act3Allocs[k]/100) * rates[k], 0);
+
+  // Run 60-month simulation — track each product separately
+  const portfolios = {};
+  [...G.act3Chosen].forEach(k => {
+    portfolios[k] = [];
+    let val = seed * (G.act3Allocs[k]/100);
+    for(let m = 1; m <= MONTHS; m++){
+      val = val * (1 + rates[k]) + contribPerMonth * (G.act3Allocs[k]/100);
+      portfolios[k].push(Math.round(val));
+    }
+  });
+
+  // Total portfolio per month
+  const totals = Array.from({length:MONTHS}, (_,i) =>
+    [...G.act3Chosen].reduce((s,k) => s + portfolios[k][i], 0));
+
+  // Total invested (seed + contributions)
+  const totalInvested = seed + contribPerMonth * MONTHS;
+  const finalValue    = totals[MONTHS - 1];
+  const totalReturn   = finalValue - totalInvested;
+  const returnPct     = Math.round((totalReturn / totalInvested) * 100);
+
+  // Render summary stats
+  document.getElementById('act3Summary').innerHTML = `
+    <div class="a3-stat"><div class="a3-stat-label">Year 5 Portfolio</div><div class="a3-stat-val">${fmt(finalValue)}</div></div>
+    <div class="a3-stat"><div class="a3-stat-label">Total Invested</div><div class="a3-stat-val" style="color:var(--blue2)">${fmt(totalInvested)}</div></div>
+    <div class="a3-stat"><div class="a3-stat-label">Net Return</div><div class="a3-stat-val" style="color:${totalReturn>0?'var(--green)':'var(--red)'}">${fmt(totalReturn)} (+${returnPct}%)</div></div>`;
+
+  // Render chart
+  if(act3ChartInstance){ act3ChartInstance.destroy(); act3ChartInstance = null; }
+  const ctx = document.getElementById('act3Chart').getContext('2d');
+  const labels = Array.from({length:MONTHS}, (_,i) => {
+    const m = i + 1;
+    if(m === 12) return 'Yr 1';
+    if(m === 24) return 'Yr 2';
+    if(m === 36) return 'Yr 3';
+    if(m === 48) return 'Yr 4';
+    if(m === 60) return 'Yr 5';
+    return m % 12 === 0 ? '' : '';
+  });
+
+  const datasets = [...G.act3Chosen].map(k => ({
+    label: ACT3_PRODUCTS[k].name,
+    data: portfolios[k],
+    borderColor: ACT3_COLORS[k],
+    backgroundColor: ACT3_COLORS[k] + '22',
+    borderWidth: 2,
+    fill: false,
+    tension: 0.3,
+    pointRadius: 0,
+    pointHoverRadius: 4,
+  }));
+
+  // Add total line
+  datasets.push({
+    label: 'Total Portfolio',
+    data: totals,
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 3,
+    fill: true,
+    tension: 0.3,
+    pointRadius: 0,
+    pointHoverRadius: 5,
+    borderDash: [],
+  });
+
+  act3ChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { labels: { color:'var(--text2)', font:{ size:11 }, boxWidth:12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: KSh ${Math.round(ctx.parsed.y).toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: { ticks:{ color:'var(--text3)', font:{size:10} }, grid:{ color:'var(--border)' } },
+        y: { ticks:{ color:'var(--text3)', font:{size:10},
+               callback: v => 'KSh '+( v>=1000000?(v/1000000).toFixed(1)+'M' : v>=1000?(v/1000).toFixed(0)+'K' : v) },
+             grid:{ color:'var(--border)' } }
+      }
+    }
+  });
+
+  // Amortised tracker — for Option 1 use pre-computed remaining state, for Option 2 use effectiveMonths
+  const tracker = document.getElementById('act3AmortTracker');
+  const trackerLoans = G.act3Option === 1
+    ? G.act3RemainingAmort  // post-allocation remaining for Option 1
+    : p.loans.filter(l=>l.t==='amort' && effectiveMonths(l) > 0).map(l => ({
+        id:l.id, n:l.n, p:l.p, remMonths:effectiveMonths(l), outstanding:effectiveMonths(l)*l.p
+      }));
+
+  if(G.act3AmortMo > 0 && trackerLoans.length > 0){
+    tracker.style.display = '';
+    tracker.innerHTML = `
+      <div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">
+        Amortised loans ${G.act3Option===1?'still running after Option 1 allocation':'clearing while you invest'}
+      </div>
+      ${trackerLoans.map(l => `
+        <div class="a3-amort-row">
+          <span style="font-weight:600;color:var(--text)">${l.n}</span>
+          <span style="color:var(--text2)">${fmt(l.p)}/month</span>
+          <span style="color:var(--green)">${l.remMonths} months remaining · clears Month ${l.remMonths}</span>
+        </div>`).join('')}
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">
+        After all amortised loans clear, your full
+        <strong>${fmt(Math.round(p.cash*0.5))}/month</strong>
+        (50% of available cash) flows to investments —
+        your portfolio growth accelerates from that point.
+      </div>`;
+  } else {
+    tracker.style.display = 'none';
+  }
+
+  // Product breakdown panel
+  const bd = document.getElementById('act3Breakdown');
+  bd.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Year 5 portfolio breakdown</div>
+    ${[...G.act3Chosen].map(k => {
+      const finalProdVal = portfolios[k][MONTHS-1];
+      const share = Math.round(finalProdVal / finalValue * 100);
+      return `<div class="a3-breakdown-row">
+        <div style="width:10px;height:10px;border-radius:2px;background:${ACT3_COLORS[k]};margin-right:10px;flex-shrink:0"></div>
+        <div style="flex:1;font-size:12px;color:var(--text)">${ACT3_PRODUCTS[k].name}</div>
+        <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:${ACT3_COLORS[k]}">${fmt(finalProdVal)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-left:8px;min-width:32px;text-align:right">${share}%</div>
+      </div>`;
+    }).join('')}`;
+}
+
+
+</script>
